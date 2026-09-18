@@ -1,0 +1,18 @@
+{
+  "name": "the-journey-to-bappa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "PATH=\"$HOME/.nvm/versions/node/v22.23.2/bin:$PATH\" vite",
+    "build": "PATH=\"$HOME/.nvm/versions/node/v22.23.2/bin:$PATH\" tsc && PATH=\"$HOME/.nvm/versions/node/v22.23.2/bin:$PATH\" vite build",
+    "preview": "PATH=\"$HOME/.nvm/versions/node/v22.23.2/bin:$PATH\" vite preview"
+  },
+  "dependencies": {
+    "phaser": "^4.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}
