@@ -11,9 +11,12 @@ export class Level1Scene extends Phaser.Scene {
   private obstacles!: Phaser.Physics.Arcade.StaticGroup;
   private soundManager!: SoundManager;
   private doorObstacle?: Phaser.GameObjects.Rectangle;
-  private screwedPanelSprite!: Phaser.GameObjects.Rectangle;
-  private screwedPanelGlow?: Phaser.Tweens.Tween;
+  private openedPanelIndicator?: Phaser.GameObjects.Container;
   private isLevelCompleting: boolean = false;
+
+  // Background room dimensions
+  private readonly roomWidth = 1466;
+  private readonly roomHeight = 1073;
 
   constructor() {
     super('Level1Scene');
@@ -24,29 +27,31 @@ export class Level1Scene extends Phaser.Scene {
     this.soundManager = SoundManager.getInstance();
     this.soundManager.startBGM();
 
-    const { width, height } = this.cameras.main;
+    // 1. World & Camera Bounds
+    this.physics.world.setBounds(0, 0, this.roomWidth, this.roomHeight);
+    this.cameras.main.setBounds(0, 0, this.roomWidth, this.roomHeight);
 
-    // 1. Room Background Shell (scaled to 1024x768)
-    const floor = this.add.image(width / 2, height / 2, 'room_floor');
-    floor.setDisplaySize(width, height);
-    floor.setDepth(0);
+    // 2. Room Background Artwork (User uploaded bedroom.png)
+    const background = this.add.image(this.roomWidth / 2, this.roomHeight / 2, 'room_floor');
+    background.setDisplaySize(this.roomWidth, this.roomHeight);
+    background.setDepth(0);
 
-    // 2. Obstacles static group
+    // 3. Obstacles Static Group
     this.obstacles = this.physics.add.staticGroup();
+    this.createCollisionBoundaries();
 
-    // Create room boundary walls with strict collisions matching the visual baseboards
-    this.createBoundaries(width, height);
-
-    // 3. Furniture Placement
-    this.createFurniture();
-
-    // 4. Player Spawn (open area in bedroom center)
-    this.player = new Player(this, 460, 420);
+    // 4. Player Spawn (Open area in bedroom center)
+    this.player = new Player(this, 705, 570);
+    this.player.setCustomScale(1.75);
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
     // Collide player with all walls and furniture obstacles
     this.physics.add.collider(this.player, this.obstacles);
 
-    // 5. Interaction Manager
+    // 5. Visual Indicator for Opened Panel
+    this.createPanelIndicator();
+
+    // 6. Interaction Manager
     this.interactionManager = new InteractionManager(this);
 
     // Forward prompt updates to UIScene
@@ -54,133 +59,141 @@ export class Level1Scene extends Phaser.Scene {
       this.events.emit('interactable-changed', interactable);
     });
 
-    // Register all interactable objects in the bedroom
+    // Register all interactable objects across the bedroom
     this.setupInteractables();
 
     // Listen for scene resume to re-evaluate interactable prompts
     this.events.on('resume', () => {
       this.interactionManager.update(this.player.x, this.player.y);
-      this.updateFurnitureVisuals();
+      this.updateVisualState();
     });
 
-    // Welcome toast notification
+    // Initial Welcome Toast
     this.time.delayedCall(400, () => {
-      this.events.emit('show-toast', 'Explore your bedroom and find a way out!');
+      this.events.emit('show-toast', 'Explore your bedroom and find a way to unlock the door!');
     });
   }
 
-  private createBoundaries(width: number, height: number) {
-    // Left Wall: baseboard boundary at x = 90
-    const leftWall = this.add.rectangle(45, height / 2, 90, height, 0x000000, 0);
+  private createCollisionBoundaries() {
+    // 1. Outer Boundary Walls
+    // Left Wall (x: 0..115)
+    const leftWall = this.add.rectangle(55, this.roomHeight / 2, 115, this.roomHeight, 0x000000, 0);
     this.physics.add.existing(leftWall, true);
     this.obstacles.add(leftWall);
 
-    // Right Wall: baseboard boundary at x = 934
-    const rightWall = this.add.rectangle(979, height / 2, 90, height, 0x000000, 0);
+    // Right Wall (x: 1380..1466)
+    const rightWall = this.add.rectangle(1423, this.roomHeight / 2, 90, this.roomHeight, 0x000000, 0);
     this.physics.add.existing(rightWall, true);
     this.obstacles.add(rightWall);
 
-    // Bottom Wall: baseboard boundary at y = 705
-    const bottomWall = this.add.rectangle(width / 2, 735, width, 66, 0x000000, 0);
-    this.physics.add.existing(bottomWall, true);
-    this.obstacles.add(bottomWall);
-
-    // Top Wall Left Segment (left of door): spans x=0..445, y=0..196
-    const topWallLeft = this.add.rectangle(222, 98, 445, 196, 0x000000, 0);
+    // Top Wall Left of Door (x: 0..635, y: 0..205)
+    const topWallLeft = this.add.rectangle(317, 102, 635, 205, 0x000000, 0);
     this.physics.add.existing(topWallLeft, true);
     this.obstacles.add(topWallLeft);
 
-    // Top Wall Right Segment (right of door): spans x=579..1024, y=0..196
-    const topWallRight = this.add.rectangle(801, 98, 445, 196, 0x000000, 0);
+    // Top Wall Right of Door (x: 770..1466, y: 0..205)
+    const topWallRight = this.add.rectangle(1118, 102, 700, 205, 0x000000, 0);
     this.physics.add.existing(topWallRight, true);
     this.obstacles.add(topWallRight);
 
-    // Bedroom Door obstacle (centered at top, x: 512, width: 134, y=0..196)
+    // Bottom Wall Left (x: 0..540, y: 910..1073)
+    const botWallLeft = this.add.rectangle(270, 990, 540, 165, 0x000000, 0);
+    this.physics.add.existing(botWallLeft, true);
+    this.obstacles.add(botWallLeft);
+
+    // Bottom Wall Right (x: 925..1466, y: 910..1073)
+    const botWallRight = this.add.rectangle(1195, 990, 540, 165, 0x000000, 0);
+    this.physics.add.existing(botWallRight, true);
+    this.obstacles.add(botWallRight);
+
+    // Bottom Step Boundary (x: 540..925, y: 960..1073)
+    const botStep = this.add.rectangle(732, 1015, 390, 115, 0x000000, 0);
+    this.physics.add.existing(botStep, true);
+    this.obstacles.add(botStep);
+
+    // 2. Door Obstacle Barrier (centered at top, x: 705, y: 100)
     // Prevents player from passing through door frame until unlocked
-    this.doorObstacle = this.add.rectangle(512, 98, 134, 196, 0x000000, 0);
+    this.doorObstacle = this.add.rectangle(705, 100, 135, 200, 0x000000, 0);
     this.physics.add.existing(this.doorObstacle, true);
     this.obstacles.add(this.doorObstacle);
-  }
 
-  private createFurniture() {
-    // 1. Bed (upper-left, flush with top-left baseboard)
-    const bed = this.add.image(190, 250, 'room_bed');
-    bed.setScale(0.135);
-    bed.setDepth(200);
-
-    // Bed collision box (protects mattress and headboard)
-    const bedObstacle = this.add.rectangle(190, 260, 150, 110, 0x000000, 0);
+    // 3. Furniture Collisions
+    // Bed & Nightstand (upper left: x: 110..435, y: 205..530)
+    const bedObstacle = this.add.rectangle(275, 370, 310, 240, 0x000000, 0);
     this.physics.add.existing(bedObstacle, true);
     this.obstacles.add(bedObstacle);
 
-    // 2. Ornate Mat (beside bed)
-    const mat = this.add.image(190, 365, 'room_mat');
-    mat.setScale(0.105);
-    mat.setDepth(5);
-
-    // 3. Study Table / Desk (upper-right)
-    const table = this.add.image(845, 250, 'room_table');
-    table.setScale(0.12);
-    table.setDepth(190);
-
-    const tableObstacle = this.add.rectangle(845, 255, 145, 100, 0x000000, 0);
-    this.physics.add.existing(tableObstacle, true);
-    this.obstacles.add(tableObstacle);
-
-    // Parchment note lying visibly on study desk
-    const tableNote = this.add.image(830, 230, 'puzzle_note');
-    tableNote.setScale(0.028);
-    tableNote.setDepth(195);
-    tableNote.setAngle(-8);
-
-    // 4. Tall Almirah / Cupboard (top wall right of door)
-    const cupboard = this.add.image(665, 225, 'room_cupboard');
-    cupboard.setScale(0.13);
-    cupboard.setDepth(160);
-
-    const cupboardObstacle = this.add.rectangle(665, 235, 130, 115, 0x000000, 0);
-    this.physics.add.existing(cupboardObstacle, true);
-    this.obstacles.add(cupboardObstacle);
-
-    // 5. Bedside Locked Drawer (lower-left)
-    const drawer = this.add.image(160, 560, 'room_drawer');
-    drawer.setScale(0.085);
-    drawer.setDepth(540);
-
-    const drawerObstacle = this.add.rectangle(160, 565, 85, 75, 0x000000, 0);
+    // Bedside Drawer (lower left: x: 130..325, y: 700..835)
+    const drawerObstacle = this.add.rectangle(225, 770, 185, 110, 0x000000, 0);
     this.physics.add.existing(drawerObstacle, true);
     this.obstacles.add(drawerObstacle);
 
-    // 6. Screwed Panel on Right Wall (skirting board level)
-    this.screwedPanelSprite = this.add.rectangle(926, 510, 22, 46, 0x3d2b1f, 0.9);
-    this.screwedPanelSprite.setStrokeStyle(1.5, 0x8a6332);
-    this.screwedPanelSprite.setDepth(490);
+    // Almirah / Cupboard (upper right of door: x: 860..1060, y: 205..430)
+    const cupboardObstacle = this.add.rectangle(960, 320, 190, 210, 0x000000, 0);
+    this.physics.add.existing(cupboardObstacle, true);
+    this.obstacles.add(cupboardObstacle);
 
-    // Screws indication
-    const screw1 = this.add.circle(926, 495, 2.5, 0xcccccc);
-    const screw2 = this.add.circle(926, 525, 2.5, 0xcccccc);
-    screw1.setDepth(491);
-    screw2.setDepth(491);
+    // Study Desk & Chair (x: 1080..1380, y: 250..440)
+    const deskObstacle = this.add.rectangle(1230, 345, 290, 170, 0x000000, 0);
+    this.physics.add.existing(deskObstacle, true);
+    this.obstacles.add(deskObstacle);
 
-    // Decorative gentle pulsing glow on panel
-    this.screwedPanelGlow = this.tweens.add({
-      targets: this.screwedPanelSprite,
-      alpha: 0.6,
-      duration: 1200,
+    // 4-Icon Puzzle Chest & Extension Shelf (x: 1085..1365, y: 475..645)
+    const chestObstacle = this.add.rectangle(1225, 560, 270, 140, 0x000000, 0);
+    this.physics.add.existing(chestObstacle, true);
+    this.obstacles.add(chestObstacle);
+
+    // Screwed Panel Box (lower right: x: 1180..1285, y: 655..770)
+    const panelObstacle = this.add.rectangle(1232, 715, 100, 90, 0x000000, 0);
+    this.physics.add.existing(panelObstacle, true);
+    this.obstacles.add(panelObstacle);
+
+    // Bottom Right Plant Pot (x: 1310..1380, y: 720..830)
+    const plantRightObstacle = this.add.rectangle(1345, 780, 65, 80, 0x000000, 0);
+    this.physics.add.existing(plantRightObstacle, true);
+    this.obstacles.add(plantRightObstacle);
+
+    // Middle Left Plant Pot (x: 110..155, y: 600..680)
+    const plantLeftObstacle = this.add.rectangle(132, 645, 50, 60, 0x000000, 0);
+    this.physics.add.existing(plantLeftObstacle, true);
+    this.obstacles.add(plantLeftObstacle);
+  }
+
+  private createPanelIndicator() {
+    this.openedPanelIndicator = this.add.container(1232, 715);
+    this.openedPanelIndicator.setDepth(15);
+    this.openedPanelIndicator.setVisible(false);
+
+    const glow = this.add.circle(0, 0, 18, 0x4eed94, 0.4);
+    this.tweens.add({
+      targets: glow,
+      alpha: 0.15,
+      scale: 1.25,
+      duration: 1000,
       yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
+      repeat: -1
     });
+
+    const badge = this.add.circle(0, 0, 9, 0x1a0f07, 0.9);
+    badge.setStrokeStyle(1.5, 0x4eed94);
+    const check = this.add.text(0, 0, '✓', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '11px',
+      color: '#4eed94'
+    }).setOrigin(0.5);
+
+    this.openedPanelIndicator.add([glow, badge, check]);
+    this.updateVisualState();
   }
 
   private setupInteractables() {
-    // 1. Note on Study Desk
+    // 1. Parchment Note on Study Table
     this.interactionManager.register(new Interactable({
       id: 'desk_note',
-      x: 830,
-      y: 295,
-      radius: 75,
-      promptText: '[E] Examine Note',
+      x: 1180,
+      y: 440,
+      radius: 95,
+      promptText: '[E] Examine Study Note',
       onInteract: () => {
         this.player.freeze();
         this.scene.pause();
@@ -188,13 +201,13 @@ export class Level1Scene extends Phaser.Scene {
       }
     }));
 
-    // 2. Bed Mat (Symbol sequence clue)
+    // 2. Bedside Carpet (Symbol sequence clue)
     this.interactionManager.register(new Interactable({
       id: 'bed_mat',
-      x: 190,
-      y: 365,
-      radius: 75,
-      promptText: '[E] Inspect Carpet',
+      x: 300,
+      y: 605,
+      radius: 110,
+      promptText: '[E] Inspect Carpet Pattern',
       onInteract: () => {
         this.player.freeze();
         this.scene.pause();
@@ -202,62 +215,74 @@ export class Level1Scene extends Phaser.Scene {
       }
     }));
 
-    // 3. Cupboard Locker (Enter 372)
+    // 3. Cupboard Locker Keypad (Enter 372 -> Almirah Handle)
     this.interactionManager.register(new Interactable({
       id: 'cupboard_locker',
-      x: 635,
-      y: 275,
-      radius: 75,
-      promptText: '[E] Cupboard Locker',
+      x: 910,
+      y: 440,
+      radius: 90,
+      promptText: '[E] Cupboard Keypad',
       onInteract: () => {
         if (!GameState.isPuzzleSolved('lockerUnlocked')) {
           this.player.freeze();
           this.scene.pause();
           this.scene.launch('KeypadModal');
         } else {
-          this.events.emit('show-toast', 'The locker is already unlocked. You got the Almirah Handle!');
+          this.soundManager.playButtonClick();
+          this.events.emit('show-toast', 'The locker is open. You already obtained the Almirah Handle!');
         }
       }
     }));
 
-    // 4. Almirah Upper Doors (Requires Handle -> Reveals 4-Icon Puzzle Box)
+    // 4. Almirah Upper Doors (Requires Handle)
     this.interactionManager.register(new Interactable({
       id: 'almirah_doors',
-      x: 685,
-      y: 275,
-      radius: 75,
-      promptText: '[E] Almirah',
+      x: 980,
+      y: 440,
+      radius: 90,
+      promptText: '[E] Almirah Doors',
       onInteract: () => {
         if (!GameState.isPuzzleSolved('almirahOpened')) {
           if (GameState.hasItem('Almirah_Handle')) {
-            // Attach handle and open
             this.soundManager.playCupboardOpen();
             GameState.setPuzzleState('almirahOpened', true);
-            this.events.emit('show-toast', 'You attach the handle and open the almirah! Inside is a puzzle box!');
-            this.time.delayedCall(700, () => {
-              this.player.freeze();
-              this.scene.pause();
-              this.scene.launch('IconPuzzleModal');
-            });
+            this.events.emit('show-toast', 'Attached the handle and unlocked the almirah! Inside is a clue for the puzzle chest!');
           } else {
-            this.soundManager.playInteraction();
-            this.events.emit('show-toast', 'The almirah doors are locked tight. A handle is missing.');
+            this.soundManager.playButtonClick();
+            this.events.emit('show-toast', 'The almirah doors are locked tight. A brass handle is missing.');
           }
         } else {
-          // Already opened: open puzzle box modal
-          this.player.freeze();
-          this.scene.pause();
-          this.scene.launch('IconPuzzleModal');
+          this.soundManager.playButtonClick();
+          this.events.emit('show-toast', 'The almirah is unlocked. Notice the 4 sacred symbols on the puzzle chest!');
         }
       }
     }));
 
-    // 5. Bedside Drawer (Requires Key 1 -> Screwdriver)
+    // 5. 4-Icon Puzzle Chest (Symbol dials -> Key 1)
+    this.interactionManager.register(new Interactable({
+      id: 'puzzle_chest',
+      x: 1185,
+      y: 600,
+      radius: 95,
+      promptText: '[E] 4-Icon Puzzle Chest',
+      onInteract: () => {
+        if (!GameState.isPuzzleSolved('boxUnlocked')) {
+          this.player.freeze();
+          this.scene.pause();
+          this.scene.launch('IconPuzzleModal');
+        } else {
+          this.soundManager.playButtonClick();
+          this.events.emit('show-toast', 'The puzzle chest is open. You already retrieved Key 1!');
+        }
+      }
+    }));
+
+    // 6. Bedside Drawer (Requires Key 1 -> Screwdriver)
     this.interactionManager.register(new Interactable({
       id: 'bedside_drawer',
-      x: 160,
-      y: 550,
-      radius: 75,
+      x: 230,
+      y: 715,
+      radius: 95,
       promptText: '[E] Bedside Drawer',
       onInteract: () => {
         if (!GameState.isPuzzleSolved('drawerUnlocked')) {
@@ -268,89 +293,154 @@ export class Level1Scene extends Phaser.Scene {
             this.soundManager.playItemPickup();
             this.events.emit('show-toast', 'Unlocked drawer with Key 1! Found a Screwdriver!');
           } else {
-            this.soundManager.playInteraction();
-            this.events.emit('show-toast', 'The drawer is locked with a brass keyhole.');
+            this.soundManager.playButtonClick();
+            this.events.emit('show-toast', 'The bedside drawer is locked with a brass keyhole. Find Key 1.');
           }
         } else {
-          this.events.emit('show-toast', 'The drawer is empty. You already took the Screwdriver.');
+          this.soundManager.playButtonClick();
+          this.events.emit('show-toast', 'The drawer is open. You already took the Screwdriver.');
         }
       }
     }));
 
-    // 6. Screwed Wall Panel (Requires Screwdriver -> Bedroom Door Key + Artefact Fragment)
+    // 7. Screwed Panel Box (Requires Screwdriver -> Bedroom Door Key & Artefact Fragment)
     this.interactionManager.register(new Interactable({
       id: 'screwed_panel',
-      x: 905,
-      y: 510,
-      radius: 75,
-      promptText: '[E] Screwed Wall Panel',
+      x: 1210,
+      y: 715,
+      radius: 95,
+      promptText: '[E] Screwed Panel Box',
       onInteract: () => {
         if (!GameState.isPuzzleSolved('panelOpened')) {
           if (GameState.hasItem('Screwdriver')) {
-            this.soundManager.playInteraction();
+            this.soundManager.playPuzzleSuccess();
             GameState.setPuzzleState('panelOpened', true);
             GameState.addItem('Bedroom_Door_Key');
             GameState.addItem('Artefact_Fragment');
-            this.soundManager.playPuzzleSuccess();
-            this.events.emit('show-toast', 'Unscrewed panel! Found the Bedroom Door Key & Artefact Fragment!');
-            this.screwedPanelSprite.setFillStyle(0x18100a);
+            this.updateVisualState();
+            this.events.emit('show-toast', 'Unscrewed the box! Found Bedroom Door Key & 1st Artefact Fragment!');
           } else {
-            this.soundManager.playInteraction();
-            this.events.emit('show-toast', 'A metal wall panel secured tightly with screws.');
+            this.soundManager.playButtonClick();
+            this.events.emit('show-toast', 'A wooden box tightly secured with 4 screws. You need a tool to open it.');
           }
         } else {
-          this.events.emit('show-toast', 'The panel compartment is open and empty.');
+          this.soundManager.playButtonClick();
+          this.events.emit('show-toast', 'The box is opened. You already collected the Bedroom Door Key and Artefact Fragment.');
         }
       }
     }));
 
-    // 7. Bedroom Door (Requires Bedroom Door Key -> Complete Level)
+    // 8. Bedroom Door (Requires Bedroom Door Key -> Complete Level)
     this.interactionManager.register(new Interactable({
       id: 'bedroom_door',
-      x: 512,
-      y: 205,
-      radius: 85,
+      x: 705,
+      y: 235,
+      radius: 100,
       promptText: '[E] Bedroom Door',
       onInteract: () => {
         if (!GameState.isPuzzleSolved('doorUnlocked')) {
           if (GameState.hasItem('Bedroom_Door_Key')) {
             this.soundManager.playDoorOpen();
             GameState.setPuzzleState('doorUnlocked', true);
-            this.events.emit('show-toast', 'Door unlocked! Stepping through...');
+            this.events.emit('show-toast', 'Door unlocked! Stepping through into the hallway...');
 
-            // Remove door obstacle so player can step through
+            // Destroy door barrier obstacle so player can step through
             if (this.doorObstacle) {
               this.doorObstacle.destroy();
             }
 
             this.time.delayedCall(700, () => {
-              if (this.isLevelCompleting) return;
-              this.isLevelCompleting = true;
-              this.scene.stop('UIScene');
-              this.scene.stop('Level1Scene');
-              this.scene.start('LevelCompleteScene');
+              this.completeLevel();
             });
           } else {
-            this.soundManager.playInteraction();
-            this.events.emit('show-toast', 'The bedroom door is locked. Find the key to escape.');
+            this.soundManager.playButtonClick();
+            this.events.emit('show-toast', 'The bedroom door is locked. Find the key to escape!');
           }
         } else {
-          // Door already open
-          if (this.isLevelCompleting) return;
-          this.isLevelCompleting = true;
-          this.scene.stop('UIScene');
-          this.scene.stop('Level1Scene');
-          this.scene.start('LevelCompleteScene');
+          this.completeLevel();
         }
+      }
+    }));
+
+    // 9. Bed & Lamp (Atmospheric / Lore Interaction)
+    this.interactionManager.register(new Interactable({
+      id: 'bed_lore',
+      x: 440,
+      y: 370,
+      radius: 85,
+      promptText: '[E] Inspect Bed',
+      onInteract: () => {
+        this.soundManager.playButtonClick();
+        this.events.emit('show-toast', 'Your cozy bed. Under the quilt you made a vow to reach Bappa’s sanctum tonight.');
+      }
+    }));
+
+    // 10. Study Desk & Lantern
+    this.interactionManager.register(new Interactable({
+      id: 'study_desk_lore',
+      x: 1280,
+      y: 440,
+      radius: 85,
+      promptText: '[E] Inspect Desk',
+      onInteract: () => {
+        this.soundManager.playButtonClick();
+        this.events.emit('show-toast', 'A glowing brass lantern and prayer scriptures. The calendar above notes Ganesh Chaturthi.');
+      }
+    }));
+
+    // 11. Ganesh Chaturthi Calendar
+    this.interactionManager.register(new Interactable({
+      id: 'calendar_lore',
+      x: 1305,
+      y: 300,
+      radius: 85,
+      promptText: '[E] View Calendar',
+      onInteract: () => {
+        this.soundManager.playButtonClick();
+        this.events.emit('show-toast', 'Calendar: “Ganesh Chaturthi — May the Remover of Obstacles bless your journey.”');
+      }
+    }));
+
+    // 12. Ganesha Wall Painting
+    this.interactionManager.register(new Interactable({
+      id: 'ganesha_mural',
+      x: 260,
+      y: 270,
+      radius: 85,
+      promptText: '[E] Sacred Mural',
+      onInteract: () => {
+        this.soundManager.playButtonClick();
+        this.events.emit('show-toast', '॥ गणपति बाप्पा ॥ The divine portrait radiates a warm, comforting light.');
+      }
+    }));
+
+    // 13. Bottom Ganesha Rug
+    this.interactionManager.register(new Interactable({
+      id: 'bottom_rug',
+      x: 705,
+      y: 835,
+      radius: 85,
+      promptText: '[E] Sacred Rug',
+      onInteract: () => {
+        this.soundManager.playButtonClick();
+        this.events.emit('show-toast', 'A rich red rug woven with the emblem of Lord Ganesha. Standing here fills you with courage.');
       }
     }));
   }
 
-  private updateFurnitureVisuals() {
-    // Update visual appearance based on game state
-    if (GameState.isPuzzleSolved('panelOpened')) {
-      this.screwedPanelSprite.setFillStyle(0x18100a);
+  private updateVisualState() {
+    if (this.openedPanelIndicator) {
+      this.openedPanelIndicator.setVisible(GameState.isPuzzleSolved('panelOpened'));
     }
+  }
+
+  private completeLevel() {
+    if (this.isLevelCompleting) return;
+    this.isLevelCompleting = true;
+    this.player.freeze();
+    this.scene.stop('UIScene');
+    this.scene.stop('Level1Scene');
+    this.scene.start('LevelCompleteScene');
   }
 
   update(time: number, delta: number) {
@@ -358,13 +448,9 @@ export class Level1Scene extends Phaser.Scene {
       this.player.update(time, delta);
       this.interactionManager.update(this.player.x, this.player.y);
 
-      // If door is unlocked and player steps through door threshold (y < 190)
-      if (GameState.isPuzzleSolved('doorUnlocked') && this.player.y < 190) {
-        this.isLevelCompleting = true;
-        this.player.freeze();
-        this.scene.stop('UIScene');
-        this.scene.stop('Level1Scene');
-        this.scene.start('LevelCompleteScene');
+      // If door is unlocked and player steps through doorway threshold (y < 210)
+      if (GameState.isPuzzleSolved('doorUnlocked') && this.player.y < 210) {
+        this.completeLevel();
       }
     }
   }

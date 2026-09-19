@@ -93,12 +93,12 @@ export class Level3CompleteScene extends Phaser.Scene {
     container.add(lore);
 
     // 1. Proceed to Level 4 (Primary)
-    const nextBtn = this.add.rectangle(width / 2 - 145, height / 2 + 215, 250, 48, 0x6b3f1b, 1);
+    const nextBtn = this.add.rectangle(width / 2 - 240, height / 2 + 215, 210, 48, 0x6b3f1b, 1);
     nextBtn.setStrokeStyle(2.5, 0xffd07b, 1);
     nextBtn.setInteractive({ useHandCursor: true });
     nextBtn.setDepth(100);
 
-    const nextTxt = this.add.text(width / 2 - 145, height / 2 + 215, '✨ PROCEED TO LEVEL 4', {
+    const nextTxt = this.add.text(width / 2 - 240, height / 2 + 215, '✨ PROCEED TO LVL 4', {
       fontFamily: 'Cinzel, serif',
       fontSize: '13px',
       color: '#ffffff',
@@ -106,7 +106,7 @@ export class Level3CompleteScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
 
     const handleNext = () => {
-      sound.playInteraction();
+      sound.playButtonClick();
       this.scene.stop('Level3CompleteScene');
       GameState.startLevel4();
       this.scene.start('Level4Scene');
@@ -115,8 +115,8 @@ export class Level3CompleteScene extends Phaser.Scene {
 
     nextBtn.on('pointerdown', handleNext);
     nextTxt.on('pointerdown', handleNext);
-
     nextBtn.on('pointerover', () => {
+      sound.playButtonHover();
       nextBtn.setFillStyle(0x8a5223);
       nextBtn.setStrokeStyle(3, 0xfff0b8);
     });
@@ -126,12 +126,12 @@ export class Level3CompleteScene extends Phaser.Scene {
     });
 
     // 2. Replay Level 3
-    const replayBtn = this.add.rectangle(width / 2 + 145, height / 2 + 215, 230, 48, 0x2b1c11, 1);
+    const replayBtn = this.add.rectangle(width / 2, height / 2 + 215, 210, 48, 0x2b1c11, 1);
     replayBtn.setStrokeStyle(1.5, 0x9e7339, 0.8);
     replayBtn.setInteractive({ useHandCursor: true });
     replayBtn.setDepth(100);
 
-    const replayTxt = this.add.text(width / 2 + 145, height / 2 + 215, '🔄 REPLAY LEVEL 3', {
+    const replayTxt = this.add.text(width / 2, height / 2 + 215, '🔄 REPLAY LEVEL 3', {
       fontFamily: 'Cinzel, serif',
       fontSize: '13px',
       color: '#d4b182',
@@ -139,7 +139,7 @@ export class Level3CompleteScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
 
     const handleReplay = () => {
-      sound.playInteraction();
+      sound.playButtonClick();
       this.scene.stop('Level3CompleteScene');
       GameState.startLevel3();
       this.scene.start('Level3Scene');
@@ -148,8 +148,8 @@ export class Level3CompleteScene extends Phaser.Scene {
 
     replayBtn.on('pointerdown', handleReplay);
     replayTxt.on('pointerdown', handleReplay);
-
     replayBtn.on('pointerover', () => {
+      sound.playButtonHover();
       replayBtn.setFillStyle(0x4a2e1b);
       replayBtn.setStrokeStyle(2, 0xd49b3d);
       replayTxt.setColor('#ffffff');
@@ -160,10 +160,44 @@ export class Level3CompleteScene extends Phaser.Scene {
       replayTxt.setColor('#d4b182');
     });
 
+    // 3. Return to Main Menu
+    const menuBtn = this.add.rectangle(width / 2 + 240, height / 2 + 215, 210, 48, 0x1d120a, 1);
+    menuBtn.setStrokeStyle(1.5, 0x8b6508, 0.75);
+    menuBtn.setInteractive({ useHandCursor: true });
+    menuBtn.setDepth(100);
+
+    const menuTxt = this.add.text(width / 2 + 240, height / 2 + 215, '🏠 MAIN MENU', {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '13px',
+      color: '#d4b182',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+
+    const handleMenu = () => {
+      sound.playButtonClick();
+      this.scene.stop('Level3CompleteScene');
+      GameState.reset();
+      this.scene.start('MainMenuScene');
+    };
+
+    menuBtn.on('pointerdown', handleMenu);
+    menuTxt.on('pointerdown', handleMenu);
+    menuBtn.on('pointerover', () => {
+      sound.playButtonHover();
+      menuBtn.setFillStyle(0x352011);
+      menuBtn.setStrokeStyle(2, 0xd49b3d);
+      menuTxt.setColor('#ffffff');
+    });
+    menuBtn.on('pointerout', () => {
+      menuBtn.setFillStyle(0x1d120a);
+      menuBtn.setStrokeStyle(1.5, 0x8b6508, 0.75);
+      menuTxt.setColor('#d4b182');
+    });
+
     // Smooth Entrance animation
     container.setAlpha(0);
     this.tweens.add({
-      targets: [container, nextBtn, nextTxt, replayBtn, replayTxt],
+      targets: [container, nextBtn, nextTxt, replayBtn, replayTxt, menuBtn, menuTxt],
       alpha: 1,
       duration: 350,
       ease: 'Power2.easeOut'

@@ -27,6 +27,71 @@ export class SoundManager {
     return SoundManager.instance;
   }
 
+  public isAudioMuted(): boolean {
+    return this.isMuted;
+  }
+
+  public toggleMute(): boolean {
+    this.isMuted = !this.isMuted;
+    if (this.isMuted && this.ctx && this.bgmGain) {
+      this.bgmGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+    } else if (!this.isMuted && this.ctx && this.bgmGain && this.isBgmPlaying) {
+      this.bgmGain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+    }
+    return this.isMuted;
+  }
+
+  public setMuted(muted: boolean): void {
+    this.isMuted = muted;
+    if (this.isMuted && this.ctx && this.bgmGain) {
+      this.bgmGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+    } else if (!this.isMuted && this.ctx && this.bgmGain && this.isBgmPlaying) {
+      this.bgmGain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+    }
+  }
+
+  public playButtonHover() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(660, this.ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.045);
+    } catch {
+      // Audio context may not have been unlocked yet
+    }
+  }
+
+  public playButtonClick() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.07);
+      gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.085);
+    } catch {
+      // Audio context may not have been unlocked yet
+    }
+  }
+
   private initContext() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;

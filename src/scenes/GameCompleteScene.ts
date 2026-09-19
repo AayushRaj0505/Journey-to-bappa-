@@ -16,7 +16,7 @@ export class GameCompleteScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, width, height, 0x070402, 1);
 
     // Warm golden ambient pulsing glow
-    const halo = this.add.circle(width / 2, height / 2 - 30, 260, 0xd49b3d, 0.22);
+    const halo = this.add.circle(width / 2, height / 2 - 40, 280, 0xd49b3d, 0.22);
     this.tweens.add({
       targets: halo,
       scale: 1.25,
@@ -27,29 +27,44 @@ export class GameCompleteScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
+    // Floating blessing particles
+    for (let i = 0; i < 20; i++) {
+      const px = Phaser.Math.Between(50, width - 50);
+      const py = Phaser.Math.Between(50, height - 50);
+      const p = this.add.circle(px, py, Phaser.Math.FloatBetween(1.5, 3), 0xffd07b, Phaser.Math.FloatBetween(0.3, 0.8));
+      this.tweens.add({
+        targets: p,
+        y: py - Phaser.Math.Between(40, 120),
+        alpha: 0.1,
+        duration: Phaser.Math.Between(3000, 6000),
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
+
     const container = this.add.container(width / 2, height / 2);
 
-    // 2. Decorative victory frame
-    const frame = this.add.rectangle(0, 0, 740, 580, 0x180f08, 0.96);
+    // 2. Decorative victory frame (800 x 620)
+    const frame = this.add.rectangle(0, 0, 800, 620, 0x180f08, 0.96);
     frame.setStrokeStyle(3, 0xd49b3d, 0.95);
     container.add(frame);
 
-    // Inner subtle gold filigree border
-    const innerBorder = this.add.rectangle(0, 0, 712, 552, 0x110a05, 0.85);
+    const innerBorder = this.add.rectangle(0, 0, 772, 592, 0x110a05, 0.85);
     innerBorder.setStrokeStyle(1.5, 0x8b6508, 0.65);
     container.add(innerBorder);
 
     // 3. Titles
-    const subtitle = this.add.text(0, -240, 'GAME COMPLETE — THE FINAL DOOR', {
+    const subtitle = this.add.text(0, -260, '✨ OUTRO & CELEBRATION — THE FINAL DOOR REACHED ✨', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '14px',
+      fontSize: '13px',
       color: '#d4b182',
-      letterSpacing: 4
+      letterSpacing: 3
     }).setOrigin(0.5);
 
-    const title = this.add.text(0, -205, 'THE JOURNEY TO BAPPA', {
+    const title = this.add.text(0, -225, 'THE JOURNEY TO BAPPA', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '28px',
+      fontSize: '30px',
       color: '#ffd07b',
       fontStyle: 'bold',
       stroke: '#4a2608',
@@ -59,10 +74,10 @@ export class GameCompleteScene extends Phaser.Scene {
     container.add([subtitle, title]);
 
     // 4. Temporary Cinematic Placeholder Box
-    const cutsceneBox = this.add.rectangle(0, -60, 360, 170, 0x0f0804, 1);
+    const cutsceneBox = this.add.rectangle(0, -100, 420, 140, 0x0f0804, 1);
     cutsceneBox.setStrokeStyle(2, 0xd49b3d, 0.85);
 
-    const cutsceneGlow = this.add.circle(0, -60, 70, 0xffd07b, 0.2);
+    const cutsceneGlow = this.add.circle(0, -100, 60, 0xffd07b, 0.2);
     this.tweens.add({
       targets: cutsceneGlow,
       alpha: 0.45,
@@ -72,17 +87,17 @@ export class GameCompleteScene extends Phaser.Scene {
       repeat: -1
     });
 
-    const cutsceneIcon = this.add.image(0, -75, 'icon_temple');
-    cutsceneIcon.setDisplaySize(60, 60);
+    const cutsceneIcon = this.add.image(0, -118, 'icon_temple');
+    cutsceneIcon.setDisplaySize(50, 50);
 
-    const cutsceneTag = this.add.text(0, -32, '🎬 ENDING CUTSCENE', {
+    const cutsceneTag = this.add.text(0, -82, '🎬 ENDING CINEMATIC OUTRO', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '15px',
+      fontSize: '14px',
       color: '#4eed94',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const cutsceneSub = this.add.text(0, -8, '[ Cinematic video cutscene will be integrated here ]', {
+    const cutsceneSub = this.add.text(0, -60, '[ Final story video cutscene will play here tomorrow ]', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '11px',
       color: '#cbb393',
@@ -91,93 +106,131 @@ export class GameCompleteScene extends Phaser.Scene {
 
     container.add([cutsceneBox, cutsceneGlow, cutsceneIcon, cutsceneTag, cutsceneSub]);
 
-    // 5. Emotional Message / Lore
-    const lore = this.add.text(0, 85,
-      'Through keen observation, unwavering faith, courage, and perseverance,\n' +
-      'every obstacle and shadow has been dissolved.\n' +
-      'The child stands embraced in the peaceful golden warmth of Bappa’s divine blessing.', {
+    // 5. Emotional Message / Lore Outro
+    const lore = this.add.text(0, 20,
+      'Through unwavering observation, pure faith, courage, and perseverance,\n' +
+      'every locked door has opened, and every wandering shadow of doubt has dissolved.\n' +
+      'Holding the completed sacred artefact at the sanctum,\n' +
+      'the child is bathed in the peaceful golden light of Bappa’s eternal blessing.', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '15px',
+      fontSize: '14px',
       color: '#f5e4cb',
       align: 'center',
-      lineSpacing: 8
+      lineSpacing: 6
     }).setOrigin(0.5);
-    container.add(lore);
 
-    // 6. Action Buttons
-    // Replay Entire Journey (From Level 1)
-    const replayAllBtn = this.add.rectangle(width / 2 - 145, height / 2 + 215, 250, 48, 0x6b3f1b, 1);
-    replayAllBtn.setStrokeStyle(2.5, 0xffd07b, 1);
-    replayAllBtn.setInteractive({ useHandCursor: true });
-    replayAllBtn.setDepth(100);
-
-    const replayAllTxt = this.add.text(width / 2 - 145, height / 2 + 215, '🔄 REPLAY FROM LEVEL 1', {
+    const mantra = this.add.text(0, 105, '॥ गणपति बप्पा मोरया • मंगल मूर्ति मोरया ॥', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '13px',
-      color: '#ffffff',
+      fontSize: '17px',
+      color: '#ffc168',
       fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5);
 
-    const handleReplayAll = () => {
-      sound.playInteraction();
+    // 6. Journey Milestones summary badges
+    const milestones = [
+      { icon: '🗝️', label: 'Bedroom Escape' },
+      { icon: '🪔', label: 'Astha Preserved' },
+      { icon: '🧩', label: 'Artefact Reunited' },
+      { icon: '🕉️', label: 'Sanctum Blessed' }
+    ];
+
+    const startBadgeX = -270;
+    const badgeGapX = 180;
+    milestones.forEach((m, idx) => {
+      const bx = startBadgeX + idx * badgeGapX;
+      const bY = 158;
+      const bBox = this.add.rectangle(bx, bY, 160, 36, 0x22130a, 0.85);
+      bBox.setStrokeStyle(1, 0x8b6508, 0.6);
+      const bTxt = this.add.text(bx, bY, `${m.icon} ${m.label}`, {
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '12px',
+        color: '#ffd07b'
+      }).setOrigin(0.5);
+      container.add([bBox, bTxt]);
+    });
+
+    container.add([lore, mantra]);
+
+    // 7. Action Buttons (Bottom Row)
+    const btnY = height / 2 + 235;
+
+    // [🔄 PLAY AGAIN (FROM START)]
+    this.createActionButton(width / 2 - 250, btnY, '🔄  PLAY AGAIN', 0x6b3f1b, 0xffffff, () => {
+      sound.playButtonClick();
       this.scene.stop('GameCompleteScene');
       GameState.reset();
       this.scene.start('Level1Scene');
       this.scene.launch('UIScene');
-    };
+    }, true);
 
-    replayAllBtn.on('pointerdown', handleReplayAll);
-    replayAllTxt.on('pointerdown', handleReplayAll);
-    replayAllBtn.on('pointerover', () => {
-      replayAllBtn.setFillStyle(0x8a5223);
-      replayAllBtn.setStrokeStyle(3, 0xfff0b8);
-    });
-    replayAllBtn.on('pointerout', () => {
-      replayAllBtn.setFillStyle(0x6b3f1b);
-      replayAllBtn.setStrokeStyle(2.5, 0xffd07b, 1);
-    });
-
-    // Replay Level 4
-    const replayLvl4Btn = this.add.rectangle(width / 2 + 145, height / 2 + 215, 250, 48, 0x2b1c11, 1);
-    replayLvl4Btn.setStrokeStyle(1.5, 0x9e7339, 0.85);
-    replayLvl4Btn.setInteractive({ useHandCursor: true });
-    replayLvl4Btn.setDepth(100);
-
-    const replayLvl4Txt = this.add.text(width / 2 + 145, height / 2 + 215, '✨ REPLAY LEVEL 4', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '13px',
-      color: '#d4b182',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
-
-    const handleReplayLvl4 = () => {
-      sound.playInteraction();
+    // [✨ REPLAY LEVEL 4]
+    this.createActionButton(width / 2, btnY, '✨  REPLAY LEVEL 4', 0x2b1c11, 0xd4b182, () => {
+      sound.playButtonClick();
       this.scene.stop('GameCompleteScene');
       GameState.startLevel4();
       this.scene.start('Level4Scene');
       this.scene.launch('UIScene');
-    };
-
-    replayLvl4Btn.on('pointerdown', handleReplayLvl4);
-    replayLvl4Txt.on('pointerdown', handleReplayLvl4);
-    replayLvl4Btn.on('pointerover', () => {
-      replayLvl4Btn.setFillStyle(0x4a2e1b);
-      replayLvl4Btn.setStrokeStyle(2, 0xd49b3d);
-      replayLvl4Txt.setColor('#ffffff');
     });
-    replayLvl4Btn.on('pointerout', () => {
-      replayLvl4Btn.setFillStyle(0x2b1c11);
-      replayLvl4Btn.setStrokeStyle(1.5, 0x9e7339, 0.85);
-      replayLvl4Txt.setColor('#d4b182');
+
+    // [🏠 MAIN MENU]
+    this.createActionButton(width / 2 + 250, btnY, '🏠  MAIN MENU', 0x25140b, 0xd4b182, () => {
+      sound.playButtonClick();
+      this.scene.stop('GameCompleteScene');
+      GameState.reset();
+      this.scene.start('MainMenuScene');
     });
 
     // Entrance Tween
     container.setAlpha(0);
     this.tweens.add({
-      targets: [container, replayAllBtn, replayAllTxt, replayLvl4Btn, replayLvl4Txt],
+      targets: container,
       alpha: 1,
       duration: 400,
       ease: 'Power2.easeOut'
+    });
+  }
+
+  private createActionButton(
+    x: number,
+    y: number,
+    text: string,
+    bgColor: number,
+    textColor: number,
+    onClick: () => void,
+    isPrimary = false
+  ) {
+    const sound = SoundManager.getInstance();
+    const btn = this.add.rectangle(x, y, 220, 46, bgColor, 1);
+    btn.setStrokeStyle(isPrimary ? 2.5 : 1.5, isPrimary ? 0xffd07b : 0x9e7339, 1);
+    btn.setInteractive({ useHandCursor: true });
+    btn.setDepth(100);
+
+    const btnText = this.add.text(x, y, text, {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '13px',
+      color: Phaser.Display.Color.IntegerToColor(textColor).rgba,
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+
+    const handleAction = () => {
+      sound.playButtonClick();
+      onClick();
+    };
+
+    btn.on('pointerdown', handleAction);
+    btnText.on('pointerdown', handleAction);
+
+    btn.on('pointerover', () => {
+      sound.playButtonHover();
+      btn.setFillStyle(isPrimary ? 0x8a5223 : 0x4a2e1b);
+      btn.setStrokeStyle(2, 0xffd07b);
+      btnText.setColor('#ffffff');
+    });
+
+    btn.on('pointerout', () => {
+      btn.setFillStyle(bgColor);
+      btn.setStrokeStyle(isPrimary ? 2.5 : 1.5, isPrimary ? 0xffd07b : 0x9e7339, 1);
+      btnText.setColor(Phaser.Display.Color.IntegerToColor(textColor).rgba);
     });
   }
 }

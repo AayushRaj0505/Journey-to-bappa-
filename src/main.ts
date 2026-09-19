@@ -19,6 +19,8 @@ import { ArtefactBoxModal } from './scenes/Modals/ArtefactBoxModal';
 import { Level3DoorKeypadModal } from './scenes/Modals/Level3DoorKeypadModal';
 import { Level4Scene } from './scenes/Level4Scene';
 import { Level4ImagePuzzleModal } from './scenes/Modals/Level4ImagePuzzleModal';
+import { PauseModal } from './scenes/Modals/PauseModal';
+import { MainMenuScene } from './scenes/MainMenuScene';
 import { GameCompleteScene } from './scenes/GameCompleteScene';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -40,11 +42,13 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [
     BootScene,
+    MainMenuScene,
     Level1Scene,
     Level2Scene,
     Level3Scene,
     Level4Scene,
     UIScene,
+    PauseModal,
     NoteModal,
     KeypadModal,
     MatClueModal,

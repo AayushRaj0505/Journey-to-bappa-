@@ -54,7 +54,8 @@ export class BootScene extends Phaser.Scene {
     });
 
     // 1. Room environment & furniture (user provided art)
-    this.load.image('room_floor', 'assets/room/floor.png');
+    this.load.image('room_floor', 'assets/room/bedroom.png');
+    this.load.image('level1_bedroom', 'assets/room/bedroom.png');
     this.load.image('room_bed', 'assets/room/bed.png');
     this.load.image('room_table', 'assets/room/table.png');
     this.load.image('room_drawer', 'assets/room/drawer.png');
@@ -127,8 +128,14 @@ export class BootScene extends Phaser.Scene {
   create() {
     this.createCharacterAnimations();
     
-    // Check if directly testing Level 2, Level 3, or Level 4 via query param ?level=N
+    // Check if directly testing a specific level via query param ?level=N
     const params = new URLSearchParams(window.location.search);
+    if (params.get('level') === '1') {
+      GameState.reset();
+      this.scene.start('Level1Scene');
+      this.scene.launch('UIScene');
+      return;
+    }
     if (params.get('level') === '2') {
       GameState.startLevel2();
       this.scene.start('Level2Scene');
@@ -148,9 +155,8 @@ export class BootScene extends Phaser.Scene {
       return;
     }
 
-    // Default: Launch Level 1
-    this.scene.start('Level1Scene');
-    this.scene.launch('UIScene');
+    // Default: Launch Title / Main Menu Screen
+    this.scene.start('MainMenuScene');
   }
 
   private createCharacterAnimations() {

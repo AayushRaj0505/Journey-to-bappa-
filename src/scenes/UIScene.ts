@@ -45,6 +45,9 @@ export class UIScene extends Phaser.Scene {
     // 6. Controls Helper (Bottom-Left)
     this.createControlsGuide(height);
 
+    // 7. Pause Button HUD (Top-Right)
+    this.createPauseButton(width);
+
     // Subscribe to GameState changes
     this.unsubscribeGameState = GameState.subscribe(() => {
       this.updateHUD();
@@ -365,11 +368,68 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createControlsGuide(height: number) {
-    this.add.text(20, height - 25, 'WASD / Arrows: Move  •  [E]: Interact  •  Mouse Click also supported', {
+    this.add.text(20, height - 25, 'WASD / Arrows: Move  •  [E]: Interact  •  [ESC]: Pause  •  Click supported', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '12px',
       color: '#9e7b57'
     }).setOrigin(0, 0.5);
+  }
+
+  private createPauseButton(width: number) {
+    const pauseBtn = this.add.rectangle(width - 55, 34, 86, 44, 0x18100a, 0.92);
+    pauseBtn.setStrokeStyle(1.5, 0xd49b3d, 0.85);
+    pauseBtn.setInteractive({ useHandCursor: true });
+
+    const pauseIcon = this.add.text(width - 80, 34, '⏸', {
+      fontSize: '15px'
+    }).setOrigin(0.5);
+
+    const pauseLabel = this.add.text(width - 66, 34, 'PAUSE', {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '11px',
+      color: '#ffc168',
+      fontStyle: 'bold'
+    }).setOrigin(0, 0.5);
+
+    const triggerPause = () => {
+      // Don't open pause if another modal is active
+      const modalKeys = [
+        'PauseModal', 'NoteModal', 'KeypadModal', 'MatClueModal',
+        'IconPuzzleModal', 'OpendBoxModal', 'Level3CloseupModal',
+        'ArtefactBoxModal', 'Level3DoorKeypadModal', 'Level4ImagePuzzleModal'
+      ];
+      for (const key of modalKeys) {
+        if (this.scene.isActive(key)) {
+          return;
+        }
+      }
+
+      // Check which level scene is active
+      const levelScenes = ['Level1Scene', 'Level2Scene', 'Level3Scene', 'Level4Scene'];
+      for (const lvl of levelScenes) {
+        if (this.scene.isActive(lvl)) {
+          this.scene.launch('PauseModal', { parentScene: lvl });
+          break;
+        }
+      }
+    };
+
+    pauseBtn.on('pointerdown', triggerPause);
+    pauseBtn.on('pointerover', () => {
+      pauseBtn.setFillStyle(0x352011);
+      pauseBtn.setStrokeStyle(2, 0xffd07b);
+      pauseLabel.setColor('#ffffff');
+    });
+    pauseBtn.on('pointerout', () => {
+      pauseBtn.setFillStyle(0x18100a);
+      pauseBtn.setStrokeStyle(1.5, 0xd49b3d, 0.85);
+      pauseLabel.setColor('#ffc168');
+    });
+
+    if (this.input.keyboard) {
+      this.input.keyboard.on('keydown-ESC', triggerPause);
+      this.input.keyboard.on('keydown-P', triggerPause);
+    }
   }
 
   private updateHUD() {
