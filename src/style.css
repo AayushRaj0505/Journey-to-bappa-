@@ -12,6 +12,9 @@ html, body {
   background: radial-gradient(circle at center, #1b120c 0%, #0a0604 100%);
   font-family: 'Outfit', sans-serif;
   color: #fff;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
 }
 
 #game-app {
@@ -22,6 +25,7 @@ html, body {
   justify-content: center;
   align-items: center;
   position: relative;
+  touch-action: none;
 }
 
 #game-container {

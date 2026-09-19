@@ -1,190 +1,265 @@
 # 🛠️ Game Customization & Tuning Guide
 
-This guide explains **how to customize and adjust everything in the game by yourself**, including:
-1. Resizing the Character (Player)
-2. Resizing Surrounding Objects & Furniture (Bed, Table, Cupboard, etc.)
-3. Adjusting Collision Hitboxes (so you don't walk through walls/objects)
-4. Adjusting Interaction Trigger Zones (where the `[E]` prompt appears)
-5. Modifying Player Movement Speed & Footstep Timing
-6. Changing Camera Zoom & World Framing
-7. Modifying Puzzles, Secret Codes, & Objectives
+This comprehensive guide explains **how to customize, modify, and balance every part of The Journey to Bappa** on your own without writing complex code.
 
 ---
 
-## 1. 🧍 How to Resize the Player Character
+## 📑 Table of Contents
+1. [Resizing & Repositioning the Player](#1-resizing--repositioning-the-player)
+2. [Modifying Movement Speed & Footstep Timing](#2-modifying-movement-speed--footstep-timing)
+3. [Level 1 Customization (Furniture, Bedroom Codes & Puzzles)](#3-level-1-customization-bedroom)
+4. [Level 2 Customization (Maze, Wall Collisions, Idols & Astha)](#4-level-2-customization-dark-diya-maze)
+5. [Level 3 Customization (Living Room, Morse Clues, Locker & Door)](#5-level-3-customization-the-living-room)
+6. [Level 4 Customization (Sanctuary, Idol & Pedestal Hitboxes, Image Puzzle)](#6-level-4-customization-the-final-sanctuary)
+7. [Astha System & Hint Timers Customization](#7-astha-system--hint-timers)
+8. [Camera Zoom & Screen Framing](#8-camera-zoom--screen-framing)
+9. [Audio & Sound Effect Tuning](#9-audio--sound-effect-tuning)
+10. [Mobile Touch Joystick & Interaction Button Customization](#10-mobile-touch-joystick--interaction-button-customization)
 
-The player character's appearance, size, physics, and animation are controlled inside:
+---
+
+## 1. Resizing & Repositioning the Player
+
+The player character's appearance, size, physics hitbox, and animations are defined in:
 📁 [`src/components/Player.ts`](file:///Work/Main-computer/Game-1/src/components/Player.ts)
 
-### Changing Visual Size
-Around line 28-30 of `src/components/Player.ts`, you will find:
+### Visual Sprite Scale
+Around line 30:
 ```typescript
-// Scale character sprite
-this.setScale(1.25);
+this.setScale(1.25); // Default player visual scale
 ```
-- **To make the character bigger**: Increase the number (e.g. `1.35` or `1.5`).
-- **To make the character smaller**: Decrease the number (e.g. `1.1` or `0.9`).
+- **Bigger character**: Change `1.25` to `1.4` or `1.5`.
+- **Smaller character**: Change `1.25` to `1.0` or `1.1`.
 
-### Updating the Physics Collision Hitbox (Feet)
-In top-down 2.5D games, the collision box is placed at the character's feet so that their head and shoulders can overlap furniture in the background naturally.
-
-Around lines 33-35 of `src/components/Player.ts`:
+### Feet Collision Body (Hitbox)
+In top-down 2.5D games, character collision occurs at the character's feet so their torso and head can overlap walls/furniture naturally:
 ```typescript
 const body = this.body as Phaser.Physics.Arcade.Body;
-body.setSize(28, 16);                                      // width, height of foot collision box
-body.setOffset((this.width - 28) / 2, this.height - 18);   // offsets it to bottom center
+body.setSize(28, 16);                                      // width, height of foot box
+body.setOffset((this.width - 28) / 2, this.height - 18);   // center at bottom feet
 ```
-> [!TIP]
-> If you make your character much bigger (e.g., `setScale(1.6)`), increase the `setSize(34, 20)` slightly so their feet match obstacles accurately.
+- If you increase sprite scale to `1.5`, adjust `body.setSize(34, 20)` so the player collides with walls accurately.
 
 ---
 
-## 2. 🪑 How to Resize & Reposition Objects & Furniture
+## 2. Modifying Movement Speed & Footstep Timing
 
-All furniture sprites, positions, and collision blocks are defined inside:
-📁 [`src/scenes/Level1Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level1Scene.ts) in the `createFurniture()` method (around lines 100–175).
+Inside [`src/components/Player.ts`](file:///Work/Main-computer/Game-1/src/components/Player.ts):
 
-Every piece of furniture follows this 3-step pattern:
+### Movement Speed
 ```typescript
-// Step A: Spawn sprite and set scale
-const bed = this.add.image(X, Y, 'room_bed');
-bed.setScale(0.135);     // <--- ADJUST SCALE HERE
-bed.setDepth(200);
-
-// Step B: Spawn invisible collision box
-const bedObstacle = this.add.rectangle(X, Y_OFFSET, WIDTH, HEIGHT, 0x000000, 0);
-this.physics.add.existing(bedObstacle, true);
-this.obstacles.add(bedObstacle);
+private speed: number = 165; // Pixels per second
 ```
+- **Faster movement**: Increase `165` to `200` or `220`.
+- **Slower movement**: Decrease `165` to `130`.
 
-### Furniture Scale Reference Table
-
-| Furniture Item | Image Key | File Location in `Level1Scene.ts` | Recommended Scale | Collision Box Dimensions |
-| :--- | :--- | :--- | :--- | :--- |
-| **Bed** | `room_bed` | `createFurniture()` | `0.135` | `150` width × `110` height |
-| **Bed Mat (Rug)** | `room_mat` | `createFurniture()` | `0.105` | Non-blocking floor visual |
-| **Study Desk / Table** | `room_table` | `createFurniture()` | `0.12` | `145` width × `100` height |
-| **Desk Note** | `puzzle_note` | `createFurniture()` | `0.028` | Attached on study desk |
-| **Almirah / Cupboard** | `room_cupboard` | `createFurniture()` | `0.13` | `130` width × `115` height |
-| **Bedside Drawer** | `room_drawer` | `createFurniture()` | `0.085` | `85` width × `75` height |
-
----
-
-## 3. 🎯 How to Adjust Interaction Zones ([E] Prompts)
-
-When the player walks close to an object, the `[E] Examine ...` tooltip appears.
-These interaction zones are registered in `src/scenes/Level1Scene.ts` inside `setupInteractables()`.
-
-Each interactable looks like this:
+### Footstep Cadence
 ```typescript
-this.interactionManager.register(new Interactable({
-  id: 'bedside_drawer',
-  x: 160,              // Center X where player triggers it
-  y: 550,              // Center Y where player triggers it
-  radius: 75,          // Detection radius in pixels (how close player must stand)
-  promptText: '[E] Bedside Drawer',
-  onInteract: () => {
-    // What happens when player presses [E] or [Space]
-  }
-}));
-```
-
-- **If you moved a piece of furniture**: Update its `x` and `y` in the interactable to match where you want the player to stand in front of it.
-- **If the trigger is too hard to reach**: Increase the `radius` (e.g. from `75` to `90`).
-- **If the trigger activates from too far away**: Decrease the `radius` (e.g. from `75` to `60`).
-
----
-
-## 4. ⚡ How to Adjust Player Movement & Controls
-
-All movement speeds and keyboard controls are in:
-📁 [`src/components/Player.ts`](file:///Work/Main-computer/Game-1/src/components/Player.ts)
-
-### Speed
-Find line 15:
-```typescript
-private speed: number = 160; // Pixels per second
-```
-- Want the player to move faster? Change `160` to `200` or `220`.
-- Want slower, stealthy movement? Change `160` to `120`.
-
-### Footstep Sound Cadence
-Find line 97:
-```typescript
-if (this.footstepTimer > 280) { // Milliseconds between footstep sounds
+if (this.footstepTimer > 280) { // Milliseconds between footsteps
   this.soundManager.playFootstep();
   this.footstepTimer = 0;
 }
 ```
-- If you increase player speed, decrease `280` to `220` so footsteps match the faster running animation.
+- If you make the player move faster, reduce `280` to `220` so footsteps sync with running.
 
 ---
 
-## 5. 🔍 How to Change Camera Zoom & Game Size
+## 3. Level 1 Customization (Bedroom)
 
-If you want the whole game to look closer (more zoomed in) or wider, you have two options:
+File: 📁 [`src/scenes/Level1Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level1Scene.ts)
 
-### Option A: Scene Camera Zoom (Recommended for dramatic feel)
-Inside [`src/scenes/Level1Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level1Scene.ts), inside `create()`:
+### Moving or Resizing Bedroom Furniture
+Inside `createFurniture()`:
 ```typescript
-// Zoom in by 15% to see the room and character closer
-this.cameras.main.setZoom(1.15);
+// Example: Study Table
+const table = this.add.image(845, 250, 'room_table');
+table.setScale(0.12); // Visual size
 
-// Keep camera centered on player:
+// Solid Obstacle Box (X, Y, Width, Height)
+const tableObstacle = this.add.rectangle(845, 255, 145, 100, 0x000000, 0);
+this.physics.add.existing(tableObstacle, true);
+this.obstacles.add(tableObstacle);
+```
+
+### Changing Level 1 Passwords & Solutions
+1. **Cupboard Keypad Code (Default: `372`)**:
+   - In [`src/scenes/Modals/KeypadModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/KeypadModal.ts):
+     ```typescript
+     private targetCode: string = '372';
+     ```
+   - In [`src/scenes/Modals/NoteModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/NoteModal.ts): Update the note text clue to match your new code.
+2. **4-Icon Rotating Lockbox**:
+   - In [`src/scenes/Modals/IconPuzzleModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/IconPuzzleModal.ts):
+     ```typescript
+     private targetIndices: number[] = [0, 1, 2, 3]; // [Lotus, Conch, Om, Mace]
+     ```
+
+---
+
+## 4. Level 2 Customization (Dark Diya Maze)
+
+Files:
+- 📁 [`src/scenes/Level2Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level2Scene.ts)
+- 📁 [`src/scenes/Level2Walls.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level2Walls.ts)
+
+### Adjusting Wall Hitboxes
+`Level2Walls.ts` exports `LEVEL2_WALLS`, a pixel-accurate grid of solid rectangles matching `maze.png`.
+- The stone wall headers extend from `y: 0` to `y: 96`.
+- The 3 Bappa idol stands have dedicated obstacle boxes:
+  - **NW Idol**: `{ x: 140, y: 75, w: 62, h: 80 }`
+  - **SW Idol**: `{ x: 98, y: 825, w: 62, h: 80 }`
+  - **SE Idol**: `{ x: 1374, y: 802, w: 62, h: 80 }`
+  - **Central Altar**: `{ x: 716, y: 454, w: 68, h: 70 }`
+
+### Level 2 Astha Rewards
+Inside `setupCornerShrines()` in `Level2Scene.ts`:
+```typescript
+// NW Idol: First idol prayed to awards 10 Astha and unlocks Hint 2 for 5s
+{ id: 'shrine_nw', name: "Bappa's North-West Shrine", x: 171, y: 140, standY: 175, asthaAward: 10 },
+
+// SW & SE Idols award 5 Astha each (bringing Level 2 total to 40)
+{ id: 'shrine_sw', name: "Bappa's South-West Shrine", x: 129, y: 890, standY: 925, asthaAward: 5 },
+{ id: 'shrine_se', name: "Bappa's South-East Shrine", x: 1405, y: 868, standY: 905, asthaAward: 5 }
+```
+
+---
+
+## 5. Level 3 Customization (The Living Room)
+
+Files:
+- 📁 [`src/scenes/Level3Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level3Scene.ts)
+- 📁 [`src/scenes/Modals/ArtefactBoxModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/ArtefactBoxModal.ts)
+- 📁 [`src/scenes/Modals/Level3DoorKeypadModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/Level3DoorKeypadModal.ts)
+- 📁 [`src/scenes/Modals/MorseChartModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/MorseChartModal.ts)
+
+### Secret Room Locker Password (Default: `SHIV`)
+Inside `ArtefactBoxModal.ts`:
+```typescript
+if (this.enteredLetters.toUpperCase() === 'SHIV') {
+  // Solved! Awards Completed_Artefact and +10 Astha
+}
+```
+
+### Exit Door Keypad Code (Default: `9277`)
+Inside `Level3DoorKeypadModal.ts`:
+```typescript
+if (this.enteredCode === '9277') {
+  // Solved! Unlocks door to Level 3 Complete Screen
+}
+```
+
+### Morse Reference Chart
+Inside `MorseChartModal.ts`, you will find `MORSE_LETTERS` and `MORSE_NUMBERS`. All letters and digits are rendered cleanly without spoiler highlights so the player can decode at their own pace.
+
+---
+
+## 6. Level 4 Customization (The Final Sanctuary)
+
+Files:
+- 📁 [`src/scenes/Level4Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level4Scene.ts)
+- 📁 [`src/scenes/Modals/Level4ImagePuzzleModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/Level4ImagePuzzleModal.ts)
+
+### Solid Hitboxes for Idol & Pedestal
+Inside `createColliders()` in `Level4Scene.ts`:
+```typescript
+// Central pedestal base collider (prevents stepping on artefact slot)
+addBox(606, 490, 100, 60);
+
+// Lord Ganesha idol solid base collider (prevents walking on idol)
+addBox(606, 195, 100, 50);
+```
+
+### The 4-Image Journey Sequence (Solution)
+Inside `Level4ImagePuzzleModal.ts`:
+```typescript
+private readonly CORRECT_SEQUENCE: string[] = [
+  'seal_elephant', // 1. Elephant (Level 1 Bedroom)
+  'seal_diya',     // 2. Diya (Level 2 Forest Maze)
+  'seal_trident',  // 3. Trident (Level 3 Living Room)
+  'seal_temple'    // 4. Temple (Level 4 Sanctuary)
+];
+```
+
+---
+
+## 7. Astha System & Hint Timers
+
+File: 📁 [`src/state/GameState.ts`](file:///Work/Main-computer/Game-1/src/state/GameState.ts)
+
+### Astha Progression Balance (Total: 100)
+| Level | Source | Astha Points Awarded | Cumulative Astha | Unlocked Hint |
+| :--- | :--- | :--- | :--- | :--- |
+| **Level 1** | Pray to Bedroom Bappa Painting | **+20** | **20 / 100** | Hint 1: `ELEPHANT` |
+| **Level 2** | Pray to 3 Maze Bappa Idols | **+10, +5, +5** | **40 / 100** | Hint 2: `DIYA` |
+| **Level 3** | Find 2nd Artefact Fragment in Locker | **+10** | **50 / 100** | Hint 3: `TRIDENT` |
+| **Level 4** | Pray to Lord Ganesha Sanctuary Idol | **+50** | **100 / 100** | Hint 4: `TEMPLE` & Full Pilgrimage Revelation |
+
+### Changing the 5-Second Hint Auto-Close Timer
+In `src/scenes/Modals/DivineHintModal.ts`, locate the countdown timer:
+```typescript
+private remainingSeconds: number = 5; // Change duration in seconds
+```
+
+---
+
+## 8. Camera Zoom & Screen Framing
+
+Inside any level scene's `create()` method:
+```typescript
+// Zoom in slightly (e.g. 1.15 = 15% zoom in, 1.0 = normal)
+this.cameras.main.setZoom(1.0);
+
+// Adjust camera follow lerp (lower numbers = smoother cinematic lag)
 this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 ```
 
-### Option B: Canvas Resolution
-Inside [`src/main.ts`](file:///Work/Main-computer/Game-1/src/main.ts):
+---
+
+## 9. Audio & Sound Effect Tuning
+
+File: 📁 [`src/systems/SoundManager.ts`](file:///Work/Main-computer/Game-1/src/systems/SoundManager.ts)
+
+### Muting / Unmuting Audio
 ```typescript
-const config: Phaser.Types.Core.GameConfig = {
-  width: 1024,  // Canvas pixel width
-  height: 768,  // Canvas pixel height
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  }
-};
+SoundManager.getInstance().toggleMute();
 ```
 
----
-
-## 6. 🧩 How to Customize Puzzles & Secret Codes
-
-### Changing the Cupboard Keypad Code (Default: `372`)
-1. Open [`src/scenes/Modals/KeypadModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/KeypadModal.ts).
-2. Look for the solution constant:
-   ```typescript
-   private targetCode: string = '372';
-   ```
-   Change it to any 3 digits you want (e.g. `'519'`).
-3. Open [`src/scenes/Modals/NoteModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/NoteModal.ts) and update the note lore text so the clue matches your new code!
-
-### Changing the 4-Icon Puzzle Box Solution
-1. Open [`src/scenes/Modals/IconPuzzleModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/IconPuzzleModal.ts).
-2. Find the target icon indexes:
-   ```typescript
-   private targetIndices: number[] = [0, 1, 2, 3]; // Corresponds to Lotus, Conch, Om, Mace
-   ```
-3. Open [`src/scenes/Modals/MatClueModal.ts`](file:///Work/Main-computer/Game-1/src/scenes/Modals/MatClueModal.ts) to update the clue displayed on the mat.
+### Changing Tone Frequencies & Volumes
+Inside `SoundManager.ts`:
+- `playAsthaIncrease()`: Plays a four-tone ascending bell arpeggio (`C5 -> E5 -> G5 -> C6`).
+- `playDoorOpen()`: Low-frequency resonant stone slide.
+- `playPuzzleSuccess()`: Resonant brass victory fanfare.
+- `playButtonHover()` & `playButtonClick()`: Crisp mechanical clicks.
 
 ---
 
-## 7. 🧪 Step-by-Step Example: Resizing an Object Yourself
+## 10. Mobile Touch Joystick & Interaction Button Customization
 
-Suppose you want to make the **Study Table** 20% larger:
+The on-screen virtual joystick and action button are built in:
+📁 [`src/scenes/UIScene.ts`](file:///Work/Main-computer/Game-1/src/scenes/UIScene.ts)
 
-1. Open [`src/scenes/Level1Scene.ts`](file:///Work/Main-computer/Game-1/src/scenes/Level1Scene.ts).
-2. Scroll to `createFurniture()`:
-   ```typescript
-   // BEFORE:
-   const table = this.add.image(845, 250, 'room_table');
-   table.setScale(0.12);
-   const tableObstacle = this.add.rectangle(845, 255, 145, 100, 0x000000, 0);
+### Virtual Joystick Position & Size
+Inside `createMobileControls(width, height)`:
+```typescript
+const joyX = 105;              // Distance from left screen edge
+const joyY = height - 105;     // Distance from bottom screen edge
+this.joystickRadius = 60;      // Outer base ring radius
+this.joystickHandleMaxDist = 42; // Maximum drag travel distance
+```
+- **Move joystick further into corner**: Change `joyX = 85` and `joyY = height - 85`.
+- **Make joystick larger**: Change `this.joystickRadius = 75` and `this.joystickHandleMaxDist = 55`.
 
-   // AFTER (20% larger):
-   const table = this.add.image(845, 250, 'room_table');
-   table.setScale(0.144); // 0.12 * 1.2 = 0.144
-   const tableObstacle = this.add.rectangle(845, 255, 174, 120, 0x000000, 0); // scale obstacle width & height too!
-   ```
-3. Save the file. Vite will automatically hot-reload your browser!
+### Virtual Interact Button Position & Size
+```typescript
+const btnX = width - 100;      // Distance from right screen edge
+const btnY = height - 105;     // Distance from bottom screen edge
+const btnBack = this.add.circle(0, 0, 42, 0x1d1108, 0.92); // Button radius (42px)
+```
+- **Move button higher**: Change `btnY = height - 120`.
+- **Make button bigger**: Change `42` to `50`.
+
+### Player Virtual Input Handling
+Inside 📁 [`src/components/Player.ts`](file:///Work/Main-computer/Game-1/src/components/Player.ts):
+- `this.moveInput` holds `{ x, y }` from `-1.0` to `1.0`.
+- It combines with keyboard inputs and is capped to magnitude `1.0` so speed remains identical whether using keyboard or virtual joystick.
+

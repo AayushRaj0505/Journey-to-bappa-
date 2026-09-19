@@ -19,6 +19,15 @@ export class UIScene extends Phaser.Scene {
   private toastTimer?: Phaser.Time.TimerEvent;
   private unsubscribeGameState?: () => void;
   private currentActiveInteractable: Interactable | null = null;
+  
+  // Mobile touch controls
+  private joystickBase!: Phaser.GameObjects.Arc;
+  private joystickThumb!: Phaser.GameObjects.Arc;
+  private joystickContainer!: Phaser.GameObjects.Container;
+  private interactButtonContainer!: Phaser.GameObjects.Container;
+  private joystickPointerId: number | null = null;
+  private readonly joystickRadius = 60;
+  private readonly joystickHandleMaxDist = 42;
 
   constructor() {
     super('UIScene');
@@ -33,19 +42,22 @@ export class UIScene extends Phaser.Scene {
     // 2. Top Objective HUD
     this.createObjectiveHUD(width);
 
-    // 3. Bottom Inventory Bar
+    // 3. Bottom Inventory Bar (Cleanly centered)
     this.createInventoryHUD(width, height);
 
-    // 4. Interaction Prompt
+    // 4. Mobile On-Screen Virtual Controls (Joystick on left, Interact button on right)
+    this.createMobileControls(width, height);
+
+    // 5. Interaction Prompt
     this.createInteractionPrompt(width, height);
 
-    // 5. Toast Notification System
+    // 6. Toast Notification System
     this.createToastSystem(width, height);
 
-    // 6. Controls Helper (Bottom-Left)
-    this.createControlsGuide(height);
+    // 7. Controls Helper (Center bottom guidance)
+    this.createControlsGuide(width, height);
 
-    // 7. Pause Button HUD (Top-Right)
+    // 8. Pause Button HUD (Top-Right)
     this.createPauseButton(width);
 
     // Subscribe to GameState changes
@@ -222,16 +234,16 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createInventoryHUD(width: number, height: number) {
-    this.inventorySlotsContainer = this.add.container(width / 2, height - 42);
+    this.inventorySlotsContainer = this.add.container(width / 2, height - 38);
 
-    const bgWidth = 380;
-    const bg = this.add.rectangle(0, 0, bgWidth, 54, 0x140d07, 0.92);
+    const bgWidth = 340;
+    const bg = this.add.rectangle(0, 0, bgWidth, 46, 0x140d07, 0.92);
     bg.setStrokeStyle(1.5, 0xd49b3d, 0.65);
     this.inventorySlotsContainer.add(bg);
 
-    const invTitle = this.add.text(-bgWidth / 2 + 15, 0, 'ITEMS', {
+    const invTitle = this.add.text(-bgWidth / 2 + 14, 0, 'ITEMS', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '12px',
+      fontSize: '11px',
       color: '#e2a348',
       fontStyle: 'bold'
     }).setOrigin(0, 0.5);
@@ -247,13 +259,13 @@ export class UIScene extends Phaser.Scene {
     childrenToKeep.forEach(c => this.inventorySlotsContainer.add(c));
 
     const maxSlots = 5;
-    const startX = -70;
-    const slotGap = 52;
+    const startX = -65;
+    const slotGap = 48;
     const items = GameState.inventory;
 
     for (let i = 0; i < maxSlots; i++) {
       const sx = startX + i * slotGap;
-      const slotBox = this.add.rectangle(sx, 0, 42, 42, 0x24160d, 0.9);
+      const slotBox = this.add.rectangle(sx, 0, 36, 36, 0x24160d, 0.9);
       slotBox.setStrokeStyle(1, 0x8b6508, 0.5);
       this.inventorySlotsContainer.add(slotBox);
 
@@ -397,12 +409,225 @@ export class UIScene extends Phaser.Scene {
     });
   }
 
-  private createControlsGuide(height: number) {
-    this.add.text(20, height - 25, 'WASD / Arrows: Move  •  [E]: Interact  •  [ESC]: Pause  •  Click supported', {
+  private isMobileDevice(): boolean {
+    const os = this.sys.game.device.os;
+    const isMobileOS = os.android || os.iOS || os.iPad || os.iPhone || os.windowsPhone;
+    const hasTouch = this.sys.game.device.input.touch || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    return isMobileOS || (hasTouch && window.innerWidth <= 1024);
+  }
+
+  private createMobileControls(width: number, height: number) {
+    if (!this.isMobileDevice()) {
+      return;
+    }
+
+    // --- 1. LEFT VIRTUAL JOYSTICK ---
+    // Positioned conveniently for left thumb
+    const joyX = 105;
+    const joyY = height - 105;
+
+    this.joystickContainer = this.add.container(joyX, joyY);
+    this.joystickContainer.setDepth(100);
+
+    // Outer subtle translucent touch target zone
+    const touchZone = this.add.circle(0, 0, this.joystickRadius + 20, 0x000000, 0.01);
+    touchZone.setInteractive({ useHandCursor: true });
+
+    // Outer ring base
+    this.joystickBase = this.add.circle(0, 0, this.joystickRadius, 0x140d07, 0.65);
+    this.joystickBase.setStrokeStyle(2.5, 0xd49b3d, 0.75);
+
+    // Cardinal direction decorative ticks
+    const ticksGraphics = this.add.graphics();
+    ticksGraphics.lineStyle(1.5, 0xffd07b, 0.5);
+    // Up, Down, Left, Right cross notches
+    ticksGraphics.lineBetween(0, -this.joystickRadius + 4, 0, -this.joystickRadius + 14);
+    ticksGraphics.lineBetween(0, this.joystickRadius - 14, 0, this.joystickRadius - 4);
+    ticksGraphics.lineBetween(-this.joystickRadius + 4, 0, -this.joystickRadius + 14, 0);
+    ticksGraphics.lineBetween(this.joystickRadius - 14, 0, this.joystickRadius - 4, 0);
+
+    // Inner joystick thumb stick handle
+    this.joystickThumb = this.add.circle(0, 0, 26, 0x2e1d10, 0.95);
+    this.joystickThumb.setStrokeStyle(2.5, 0xffd07b, 0.95);
+
+    const thumbIcon = this.add.text(0, 0, '✥', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '12px',
-      color: '#9e7b57'
-    }).setOrigin(0, 0.5);
+      fontSize: '18px',
+      color: '#ffd07b'
+    }).setOrigin(0.5);
+
+    this.joystickContainer.add([touchZone, this.joystickBase, ticksGraphics, this.joystickThumb, thumbIcon]);
+
+    const updateJoystickInput = (pointerX: number, pointerY: number) => {
+      const dx = pointerX - joyX;
+      const dy = pointerY - joyY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist === 0) {
+        this.joystickThumb.setPosition(0, 0);
+        thumbIcon.setPosition(0, 0);
+        this.setPlayerMoveInput(0, 0);
+        return;
+      }
+
+      const clampedDist = Math.min(dist, this.joystickHandleMaxDist);
+      const normX = dx / dist;
+      const normY = dy / dist;
+
+      this.joystickThumb.setPosition(normX * clampedDist, normY * clampedDist);
+      thumbIcon.setPosition(normX * clampedDist, normY * clampedDist);
+
+      const intensity = clampedDist / this.joystickHandleMaxDist;
+      this.setPlayerMoveInput(normX * intensity, normY * intensity);
+    };
+
+    const resetJoystick = () => {
+      this.joystickPointerId = null;
+      this.tweens.add({
+        targets: [this.joystickThumb, thumbIcon],
+        x: 0,
+        y: 0,
+        duration: 100,
+        ease: 'Sine.easeOut'
+      });
+      this.setPlayerMoveInput(0, 0);
+      this.joystickBase.setStrokeStyle(2.5, 0xd49b3d, 0.75);
+    };
+
+    touchZone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.joystickPointerId = pointer.id;
+      this.joystickBase.setStrokeStyle(3, 0xffe29a, 1);
+      updateJoystickInput(pointer.x, pointer.y);
+    });
+
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (this.joystickPointerId === pointer.id) {
+        updateJoystickInput(pointer.x, pointer.y);
+      }
+    });
+
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (this.joystickPointerId === pointer.id) {
+        resetJoystick();
+      }
+    });
+
+    this.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => {
+      if (this.joystickPointerId === pointer.id) {
+        resetJoystick();
+      }
+    });
+
+    // --- 2. RIGHT VIRTUAL INTERACTION BUTTON ---
+    // Positioned conveniently for right thumb
+    const btnX = width - 100;
+    const btnY = height - 105;
+
+    this.interactButtonContainer = this.add.container(btnX, btnY);
+    this.interactButtonContainer.setDepth(100);
+
+    const btnBack = this.add.circle(0, 0, 42, 0x1d1108, 0.92);
+    btnBack.setStrokeStyle(2.5, 0xd49b3d, 0.85);
+    btnBack.setInteractive({ useHandCursor: true });
+
+    const btnPulseRing = this.add.circle(0, 0, 48, 0xffd07b, 0.0);
+    btnPulseRing.setStrokeStyle(1.5, 0xffd07b, 0.4);
+
+    const btnIcon = this.add.text(0, -6, '✋', {
+      fontSize: '22px'
+    }).setOrigin(0.5);
+
+    const btnLabel = this.add.text(0, 15, 'INTERACT', {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '10px',
+      color: '#ffd07b',
+      fontStyle: 'bold',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    this.interactButtonContainer.add([btnBack, btnPulseRing, btnIcon, btnLabel]);
+
+    // Pulsate button softly when an interactable is in proximity
+    this.tweens.add({
+      targets: btnPulseRing,
+      scale: 1.15,
+      alpha: 0.65,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    const triggerAction = () => {
+      this.sound.play('ui_click', { volume: 0.6 });
+      
+      // Visual press animation
+      this.tweens.add({
+        targets: this.interactButtonContainer,
+        scaleX: 0.9,
+        scaleY: 0.9,
+        duration: 80,
+        yoyo: true,
+        ease: 'Quad.easeInOut'
+      });
+
+      // 1. Direct prompt interact if active
+      if (this.currentActiveInteractable && this.currentActiveInteractable.isEnabled) {
+        this.currentActiveInteractable.onInteract();
+        return;
+      }
+
+      // 2. Or trigger on the active level scene's interaction manager
+      const activeScenes = ['Level1Scene', 'Level2Scene', 'Level3Scene', 'Level4Scene'];
+      for (const key of activeScenes) {
+        if (this.scene.isActive(key)) {
+          const s = this.scene.get(key) as any;
+          if (s && typeof s.triggerInteraction === 'function') {
+            s.triggerInteraction();
+          }
+          break;
+        }
+      }
+    };
+
+    btnBack.on('pointerdown', triggerAction);
+    btnBack.on('pointerover', () => {
+      btnBack.setFillStyle(0x351e0e, 0.98);
+      btnBack.setStrokeStyle(3, 0xffe29a, 1);
+    });
+    btnBack.on('pointerout', () => {
+      btnBack.setFillStyle(0x1d1108, 0.92);
+      btnBack.setStrokeStyle(2.5, 0xd49b3d, 0.85);
+    });
+  }
+
+  private setPlayerMoveInput(x: number, y: number) {
+    const activeScenes = ['Level1Scene', 'Level2Scene', 'Level3Scene', 'Level4Scene'];
+    for (const key of activeScenes) {
+      if (this.scene.isActive(key)) {
+        const s = this.scene.get(key) as any;
+        if (s && typeof s.getPlayer === 'function') {
+          const player = s.getPlayer();
+          if (player && player.moveInput) {
+            player.moveInput.x = x;
+            player.moveInput.y = y;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  private createControlsGuide(width: number, height: number) {
+    const guideText = this.isMobileDevice()
+      ? 'Mobile Joystick & Touch Button active  •  WASD / [E] Keyboard supported'
+      : 'WASD / Arrows: Move  •  [E]: Interact  •  [ESC]: Pause';
+
+    this.add.text(width / 2, height - 12, guideText, {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '11px',
+      color: '#8b694b'
+    }).setOrigin(0.5);
   }
 
   private createPauseButton(width: number) {

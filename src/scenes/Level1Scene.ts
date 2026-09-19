@@ -490,6 +490,16 @@ export class Level1Scene extends Phaser.Scene {
     }
   }
 
+  public getPlayer(): Player | undefined {
+    return this.player;
+  }
+
+  public triggerInteraction(): void {
+    if (this.interactionManager) {
+      this.interactionManager.interact();
+    }
+  }
+
   destroy() {
     this.interactionManager.destroy();
   }

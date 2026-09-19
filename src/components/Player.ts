@@ -13,6 +13,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   };
   public facing: FacingDirection = 'down';
   public carryingDiya: boolean = false;
+  public moveInput: { x: number; y: number } = { x: 0, y: 0 };
   private speed: number = 165;
   private footstepTimer: number = 0;
   private stepTimer: number = 0;
@@ -88,25 +89,34 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (up) vy -= 1;
     if (down) vy += 1;
 
-    // Normalize diagonal velocity
-    if (vx !== 0 && vy !== 0) {
-      vx *= 0.7071;
-      vy *= 0.7071;
+    // Combine with virtual touch joystick input
+    vx += this.moveInput.x;
+    vy += this.moveInput.y;
+
+    // Cap magnitude to 1 for normalized multi-directional speed
+    const mag = Math.sqrt(vx * vx + vy * vy);
+    if (mag > 1) {
+      vx /= mag;
+      vy /= mag;
     }
 
     body.setVelocity(vx * this.speed, vy * this.speed);
 
     // Update facing and animations
-    const isMoving = vx !== 0 || vy !== 0;
+    const isMoving = mag > 0.05;
 
-    if (vx < 0) {
-      this.facing = 'left';
-    } else if (vx > 0) {
-      this.facing = 'right';
-    } else if (vy < 0) {
-      this.facing = 'up';
-    } else if (vy > 0) {
-      this.facing = 'down';
+    if (Math.abs(vx) > Math.abs(vy)) {
+      if (vx < -0.1) {
+        this.facing = 'left';
+      } else if (vx > 0.1) {
+        this.facing = 'right';
+      }
+    } else {
+      if (vy < -0.1) {
+        this.facing = 'up';
+      } else if (vy > 0.1) {
+        this.facing = 'down';
+      }
     }
 
     const animKey = this.carryingDiya ? `walk_diya_${this.facing}` : `walk_${this.facing}`;
@@ -144,6 +154,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   public freeze() {
+    this.moveInput = { x: 0, y: 0 };
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
       body.setVelocity(0, 0);

@@ -528,6 +528,16 @@ export class Level3Scene extends Phaser.Scene {
     }
   }
 
+  public getPlayer(): Player | undefined {
+    return this.player;
+  }
+
+  public triggerInteraction(): void {
+    if (this.currentInteractable) {
+      this.currentInteractable.onInteract();
+    }
+  }
+
   destroy() {
     this.interactables = [];
     this.currentInteractable = null;

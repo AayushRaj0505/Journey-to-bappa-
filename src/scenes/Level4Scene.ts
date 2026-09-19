@@ -143,28 +143,17 @@ export class Level4Scene extends Phaser.Scene {
     addBox(500, 940, 25, 259);
     addBox(787, 940, 25, 259);
 
-    // Central pedestal base collider
-    addBox(616, 520, 80, 50);
+    // Central pedestal base collider (expanded so player cannot walk over artefact slot)
+    addBox(606, 490, 100, 60);
+
+    // Lord Ganesha idol solid base collider (prevents walking/climbing on idol)
+    addBox(606, 195, 100, 50);
   }
 
   private createInteractables() {
     // 1. CENTRAL PEDESTAL (Sacred Artefact Slot & Image Mechanism)
     const px = 656;
     const py = 518;
-
-    // Glowing aura on pedestal
-    this.pedestalGlow = this.add.circle(px, py, 38, 0xffbb44, 0.35);
-    this.pedestalGlow.setDepth(5);
-    this.tweens.add({
-      targets: this.pedestalGlow,
-      scaleX: 1.2,
-      scaleY: 1.2,
-      alpha: 0.55,
-      duration: 1000,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
 
     // If artefact was already placed previously
     if (GameState.level4State.artefactPlaced) {
@@ -183,25 +172,11 @@ export class Level4Scene extends Phaser.Scene {
     });
     this.interactionManager.register(this.pedestalInteractable);
 
-    // Glowing halo on Lord Ganesha's Idol at (656, 235)
-    const idolHalo = this.add.circle(656, 235, 48, 0xffd07b, 0.45);
-    idolHalo.setDepth(3);
-    this.tweens.add({
-      targets: idolHalo,
-      scaleX: 1.25,
-      scaleY: 1.25,
-      alpha: 0.75,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
     // 2. LORD GANESHA IDOL (Final Astha Quest & The Sacred Journey Mystery)
     this.interactionManager.register(new Interactable({
       id: 'ganesha_shrine',
       x: 656,
-      y: 245,
+      y: 250,
       radius: 85,
       promptText: '[E] Pray before Lord Ganesha\'s Idol',
       onInteract: () => this.handleIdolPrayer()
@@ -620,6 +595,16 @@ export class Level4Scene extends Phaser.Scene {
         this.scene.start('GameCompleteScene');
       }
     });
+  }
+
+  public getPlayer(): Player | undefined {
+    return this.player;
+  }
+
+  public triggerInteraction(): void {
+    if (this.interactionManager) {
+      this.interactionManager.interact();
+    }
   }
 
   destroy() {

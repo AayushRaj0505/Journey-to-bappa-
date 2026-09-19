@@ -824,6 +824,16 @@ export class Level2Scene extends Phaser.Scene {
     this.darknessCanvasTexture.refresh();
   }
 
+  public getPlayer(): Player | undefined {
+    return this.player;
+  }
+
+  public triggerInteraction(): void {
+    if (this.interactionManager) {
+      this.interactionManager.interact();
+    }
+  }
+
   destroy() {
     if (this.vighnaPatrolTimer) {
       this.vighnaPatrolTimer.remove();
