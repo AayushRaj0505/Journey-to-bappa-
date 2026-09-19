@@ -17,6 +17,7 @@ export interface Level1Puzzles {
   drawerUnlocked: boolean;
   panelOpened: boolean;
   doorUnlocked: boolean;
+  bappaPrayed: boolean;
 }
 
 export interface Level2State {
@@ -24,9 +25,17 @@ export interface Level2State {
   ganeshaPaintingExamined: boolean;
   flowerOfferingExamined: boolean;
   sacredShrineExamined: boolean;
+  cornerShrines: [boolean, boolean, boolean, boolean]; // NW, NE, SW, SE
   cluesFound: [boolean, boolean, boolean];
   vighnaEncountered: boolean;
   level2Complete: boolean;
+}
+
+export interface DivineHints {
+  hint1: boolean; // Level 1: 1st character is ELEPHANT
+  hint2: boolean; // Level 2: 2nd character is DIYA
+  hint3: boolean; // Level 3: 3rd character is TRIDENT
+  hint4: boolean; // Level 4: 4th character is TEMPLE
 }
 
 export interface Level3State {
@@ -38,6 +47,7 @@ export interface Level3State {
   boxUnlocked: boolean;
   doorUnlocked: boolean;
   level3Complete: boolean;
+  bappaPrayed: boolean;
 }
 
 export interface Level4State {
@@ -51,6 +61,7 @@ export interface Level4State {
   tridentBannerExamined: boolean;
   templeBellExamined: boolean;
   plaqueExamined: boolean;
+  idolPrayed: boolean;
 }
 
 export interface ItemInfo {

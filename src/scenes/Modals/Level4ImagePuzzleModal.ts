@@ -66,7 +66,7 @@ export class Level4ImagePuzzleModal extends Phaser.Scene {
     this.animContainer.add(innerBorder);
 
     // 3. Header Titles
-    const title = this.add.text(0, -215, '🕉️ SACRED IMAGE MECHANISM', {
+    const title = this.add.text(0, -215, '✨ SACRED IMAGE MECHANISM', {
       fontFamily: 'Cinzel, serif',
       fontSize: '22px',
       color: '#ffd07b',
@@ -82,11 +82,14 @@ export class Level4ImagePuzzleModal extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Hint banner plaque
-    const hintBg = this.add.rectangle(0, -152, 480, 28, 0x22140b, 0.85);
+    const hintBg = this.add.rectangle(0, -152, 500, 28, 0x22140b, 0.85);
     hintBg.setStrokeStyle(1, 0xd49b3d, 0.5);
-    const hintText = this.add.text(0, -152, '📜 “The light has shown me the way. Remember what you have seen.”', {
+    const hintString = GameState.isHintUnlocked(4)
+      ? '📜 “Follow your journey: 1. Bedroom ➔ 2. Maze ➔ 3. Living Room ➔ 4. Sanctum”'
+      : '📜 “The light has shown me the way. Remember what you have seen.”';
+    const hintText = this.add.text(0, -152, hintString, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '12px',
+      fontSize: '11.5px',
       color: '#ffe5b4',
       fontStyle: 'italic'
     }).setOrigin(0.5);
@@ -231,11 +234,11 @@ export class Level4ImagePuzzleModal extends Phaser.Scene {
     const actionY = 188;
 
     // 1. Undo Button
-    const undoBtn = this.add.rectangle(-85, actionY, 130, 36, 0x331e11, 0.95);
+    const undoBtn = this.add.rectangle(-145, actionY, 115, 36, 0x331e11, 0.95);
     undoBtn.setStrokeStyle(1.5, 0xd49b3d, 0.7);
     undoBtn.setInteractive({ useHandCursor: true });
 
-    const undoTxt = this.add.text(-85, actionY, '↩ UNDO', {
+    const undoTxt = this.add.text(-145, actionY, '↩ UNDO', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '13px',
       color: '#ffc168',
@@ -253,11 +256,11 @@ export class Level4ImagePuzzleModal extends Phaser.Scene {
     });
 
     // 2. Reset Button
-    const resetBtn = this.add.rectangle(85, actionY, 130, 36, 0x331e11, 0.95);
+    const resetBtn = this.add.rectangle(0, actionY, 115, 36, 0x331e11, 0.95);
     resetBtn.setStrokeStyle(1.5, 0xd49b3d, 0.7);
     resetBtn.setInteractive({ useHandCursor: true });
 
-    const resetTxt = this.add.text(85, actionY, '⟲ RESET', {
+    const resetTxt = this.add.text(0, actionY, '⟲ RESET', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '13px',
       color: '#ffc168',
@@ -274,7 +277,33 @@ export class Level4ImagePuzzleModal extends Phaser.Scene {
       resetBtn.setStrokeStyle(1.5, 0xd49b3d, 0.7);
     });
 
-    this.animContainer.add([undoBtn, undoTxt, resetBtn, resetTxt]);
+    // 3. Divine Hints Button
+    const hintsBtn = this.add.rectangle(145, actionY, 115, 36, 0x331e11, 0.95);
+    hintsBtn.setStrokeStyle(1.5, 0xd49b3d, 0.7);
+    hintsBtn.setInteractive({ useHandCursor: true });
+
+    const hintsTxt = this.add.text(145, actionY, '📜 HINTS', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '13px',
+      color: '#ffd07b',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    hintsBtn.on('pointerdown', () => {
+      this.soundManager.playButtonClick();
+      this.scene.pause();
+      this.scene.launch('DivineHintModal', { returnScene: 'Level4ImagePuzzleModal' });
+    });
+    hintsBtn.on('pointerover', () => {
+      hintsBtn.setFillStyle(0x4d2e1a);
+      hintsBtn.setStrokeStyle(2, 0xffd07b);
+    });
+    hintsBtn.on('pointerout', () => {
+      hintsBtn.setFillStyle(0x331e11);
+      hintsBtn.setStrokeStyle(1.5, 0xd49b3d, 0.7);
+    });
+
+    this.animContainer.add([undoBtn, undoTxt, resetBtn, resetTxt, hintsBtn, hintsTxt]);
   }
 
   private selectOption(optId: string) {

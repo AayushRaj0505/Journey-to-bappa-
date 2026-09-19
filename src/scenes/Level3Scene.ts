@@ -65,6 +65,20 @@ export class Level3Scene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
+    // Glowing sacred golden aura behind Bappa's wall painting at (755, 215)
+    const bappaPaintingGlow = this.add.circle(755, 215, 36, 0xffd07b, 0.4);
+    bappaPaintingGlow.setDepth(5);
+    this.tweens.add({
+      targets: bappaPaintingGlow,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      alpha: 0.7,
+      duration: 1100,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
     // 4. Register all interactables
     this.createInteractables();
 
@@ -224,14 +238,14 @@ export class Level3Scene extends Phaser.Scene {
       onInteract: () => this.handleSecretLockerInteraction()
     }));
 
-    // 7. TALL STORAGE LOCKER CUPBOARD (Lower right corridor by plant)
+    // 7. MORSE CODE REFERENCE CHART (Lower right corridor by plant)
     this.interactables.push(new Interactable({
-      id: 'storage_locker',
+      id: 'morse_chart',
       x: 1320,
       y: 640,
       radius: 80,
-      promptText: '[E] Inspect Storage Cupboard',
-      onInteract: () => this.handleStorageLockerInteraction()
+      promptText: '[E] Examine Morse Code Chart',
+      onInteract: () => this.handleMorseChartInteraction()
     }));
 
     // 6. WALL PORTRAITS (1 to 4: Morse 9, 2, 7, 7)
@@ -281,17 +295,14 @@ export class Level3Scene extends Phaser.Scene {
       onInteract: () => this.handleExitDoorInteraction()
     }));
 
-    // 8. GANESHA SHRINE (Bappa Guidance)
+    // 8. SACRED BAPPA PAINTING (Astha Quest & Hint 3)
     this.interactables.push(new Interactable({
       id: 'ganesha_shrine_top',
       x: 755,
       y: 250,
-      radius: 65,
-      promptText: '[E] Pray at Ganesha Shrine',
-      onInteract: () => {
-        this.soundManager.playAsthaIncrease();
-        this.events.emit('show-toast', '🕉️ Bappa\'s whisper: "Look closely. Some messages are hidden in plain sight."', 4000);
-      }
+      radius: 75,
+      promptText: '[E] Pray to Bappa\'s Painting',
+      onInteract: () => this.handleBappaPaintingPrayer()
     }));
 
     // 9. TRIDENT FORESHADOWING (Wall Carving)
@@ -308,6 +319,49 @@ export class Level3Scene extends Phaser.Scene {
   }
 
   // --- Interaction Handlers ---
+
+  private handleBappaPaintingPrayer() {
+    this.soundManager.playInteraction();
+    if (GameState.level3State.bappaPrayed) {
+      this.events.emit(
+        'show-toast',
+        '✨ You have offered your devotion before Bappa\'s painting. His blessings illuminate your path.',
+        3500
+      );
+      return;
+    }
+
+    // Mark prayed
+    GameState.setLevel3Field('bappaPrayed', true);
+
+    // Floating gold particle burst
+    for (let i = 0; i < 14; i++) {
+      const sparkle = this.add.circle(
+        755 + Phaser.Math.Between(-30, 30),
+        215 + Phaser.Math.Between(-25, 25),
+        Phaser.Math.Between(2, 5),
+        0xfff0a0,
+        1
+      );
+      sparkle.setDepth(25);
+      this.tweens.add({
+        targets: sparkle,
+        y: sparkle.y - Phaser.Math.Between(30, 60),
+        x: sparkle.x + Phaser.Math.Between(-20, 20),
+        alpha: 0,
+        scale: 0.2,
+        duration: Phaser.Math.Between(700, 1200),
+        ease: 'Cubic.easeOut',
+        onComplete: () => sparkle.destroy()
+      });
+    }
+
+    this.events.emit(
+      'show-toast',
+      '✨ Devotion offered to Lord Ganesha. "Patience and keen observation reveal all hidden secrets."',
+      4000
+    );
+  }
 
   private handleSofaInteraction() {
     this.examinedObjects.add('sofa');
@@ -370,21 +424,11 @@ export class Level3Scene extends Phaser.Scene {
     this.scene.launch('ArtefactBoxModal');
   }
 
-  private handleStorageLockerInteraction() {
-    const hasCompleted = GameState.hasItem('Completed_Artefact');
-
-    if (hasCompleted) {
-      this.openCloseupModal({
-        textureKey: 'level3_art_full',
-        title: 'Sacred Circular Artefact (Level 4 Key)'
-      });
-      return;
-    }
-
-    this.examinedObjects.add('storage_locker');
-    // Open Locker Modal (SHIV password)
+  private handleMorseChartInteraction() {
+    this.examinedObjects.add('morse_chart');
+    // Open full Morse Code Reference Chart Modal
     this.scene.pause();
-    this.scene.launch('ArtefactBoxModal');
+    this.scene.launch('MorseChartModal');
   }
 
   private handlePaintingInteraction(index: number, name: string, textureKey: string) {
@@ -442,15 +486,11 @@ export class Level3Scene extends Phaser.Scene {
       }
     }
 
-    const storageInteractable = this.interactables.find(i => i.id === 'storage_locker');
-    if (storageInteractable) {
-      if (hasKey) {
-        storageInteractable.promptText = '[E] Inspect Complete Artefact (Level 4 Key)';
-      } else if (GameState.level3State.boxUnlocked) {
-        storageInteractable.promptText = '[E] Storage Locker (Unlocked)';
-      } else {
-        storageInteractable.promptText = '[E] Unlock Storage Locker';
-      }
+    const morseInteractable = this.interactables.find(i => i.id === 'morse_chart');
+    if (morseInteractable) {
+      morseInteractable.promptText = this.examinedObjects.has('morse_chart')
+        ? '[E] View Morse Code Chart'
+        : '[E] Examine Morse Code Chart';
     }
 
     // Update locker indicator marker if present

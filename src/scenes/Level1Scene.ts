@@ -48,8 +48,21 @@ export class Level1Scene extends Phaser.Scene {
     // Collide player with all walls and furniture obstacles
     this.physics.add.collider(this.player, this.obstacles);
 
-    // 5. Visual Indicator for Opened Panel
+    // 5. Visual Indicator for Opened Panel & Bappa Sacred Aura
     this.createPanelIndicator();
+    
+    // Golden pulsating aura around Bappa wall portrait
+    const bappaAura = this.add.circle(260, 185, 46, 0xffd07b, 0.18);
+    bappaAura.setDepth(2);
+    this.tweens.add({
+      targets: bappaAura,
+      scale: 1.25,
+      alpha: 0.32,
+      duration: 1600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
 
     // 6. Interaction Manager
     this.interactionManager = new InteractionManager(this);
@@ -314,11 +327,12 @@ export class Level1Scene extends Phaser.Scene {
         if (!GameState.isPuzzleSolved('panelOpened')) {
           if (GameState.hasItem('Screwdriver')) {
             this.soundManager.playPuzzleSuccess();
+            this.soundManager.playItemPickup();
             GameState.setPuzzleState('panelOpened', true);
             GameState.addItem('Bedroom_Door_Key');
             GameState.addItem('Artefact_Fragment');
             this.updateVisualState();
-            this.events.emit('show-toast', 'Unscrewed the box! Found Bedroom Door Key & 1st Artefact Fragment!');
+            this.events.emit('show-toast', '✨ Sacred Artefact Fragment (1/4) & Bedroom Key found!', 5000);
           } else {
             this.soundManager.playButtonClick();
             this.events.emit('show-toast', 'A wooden box tightly secured with 4 screws. You need a tool to open it.');
@@ -401,16 +415,37 @@ export class Level1Scene extends Phaser.Scene {
       }
     }));
 
-    // 12. Ganesha Wall Painting
+    // 12. Bappa Sacred Image (Pray to Bappa -> +20 Astha -> Unlocks 1st Password Hint: Elephant)
     this.interactionManager.register(new Interactable({
-      id: 'ganesha_mural',
+      id: 'bappa_shrine',
       x: 260,
       y: 270,
-      radius: 85,
-      promptText: '[E] Sacred Mural',
+      radius: 95,
+      promptText: '[E] Pray before Bappa',
       onInteract: () => {
-        this.soundManager.playButtonClick();
-        this.events.emit('show-toast', '॥ गणपति बाप्पा ॥ The divine portrait radiates a warm, comforting light.');
+        if (!GameState.isPuzzleSolved('bappaPrayed')) {
+          GameState.setPuzzleState('bappaPrayed', true);
+          this.soundManager.playAsthaIncrease();
+          GameState.addAstha(20);
+          GameState.unlockHint(1);
+          this.events.emit('astha-gained');
+          this.events.emit('show-toast', '✨ Full Astha reached (20/20)! Bappa bestows the 1st Divine Key: ELEPHANT!', 3500);
+
+          // Launch Divine Hint Modal
+          this.player.freeze();
+          this.scene.pause();
+          this.scene.launch('DivineHintModal', {
+            newHintIndex: 1,
+            returnScene: 'Level1Scene'
+          });
+        } else {
+          this.soundManager.playButtonClick();
+          this.player.freeze();
+          this.scene.pause();
+          this.scene.launch('DivineHintModal', {
+            returnScene: 'Level1Scene'
+          });
+        }
       }
     }));
 

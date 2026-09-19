@@ -75,8 +75,8 @@ export class MainMenuScene extends Phaser.Scene {
     // Sacred central icon badge
     const badgeBg = this.add.circle(0, -108, 38, 0x221308, 0.95);
     badgeBg.setStrokeStyle(2, 0xd49b3d, 0.9);
-    const badgeIcon = this.add.text(0, -108, '🕉️', {
-      fontSize: '32px'
+    const badgeIcon = this.add.text(0, -108, '🪔', {
+      fontSize: '28px'
     }).setOrigin(0.5);
 
     mainContainer.add([titleGlow, title, subtitle, badgeBg, badgeIcon]);
@@ -346,7 +346,7 @@ export class MainMenuScene extends Phaser.Scene {
         num: 4,
         title: 'LEVEL 4: THE FINAL DOOR',
         desc: 'Place the completed artefact onto the temple pedestal, deduce the sacred 4-image sequence, and enter Bappa’s sanctum.',
-        icon: '🕉️',
+        icon: '🛕',
         action: () => {
           GameState.startLevel4();
           this.scene.start('Level4Scene');

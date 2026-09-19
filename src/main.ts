@@ -19,6 +19,8 @@ import { ArtefactBoxModal } from './scenes/Modals/ArtefactBoxModal';
 import { Level3DoorKeypadModal } from './scenes/Modals/Level3DoorKeypadModal';
 import { Level4Scene } from './scenes/Level4Scene';
 import { Level4ImagePuzzleModal } from './scenes/Modals/Level4ImagePuzzleModal';
+import { DivineHintModal } from './scenes/Modals/DivineHintModal';
+import { MorseChartModal } from './scenes/Modals/MorseChartModal';
 import { PauseModal } from './scenes/Modals/PauseModal';
 import { MainMenuScene } from './scenes/MainMenuScene';
 import { GameCompleteScene } from './scenes/GameCompleteScene';
@@ -58,6 +60,8 @@ const config: Phaser.Types.Core.GameConfig = {
     ArtefactBoxModal,
     Level3DoorKeypadModal,
     Level4ImagePuzzleModal,
+    DivineHintModal,
+    MorseChartModal,
     LevelCompleteScene,
     Level2CompleteScene,
     Level2GameOverScene,

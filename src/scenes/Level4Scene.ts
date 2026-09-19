@@ -183,22 +183,28 @@ export class Level4Scene extends Phaser.Scene {
     });
     this.interactionManager.register(this.pedestalInteractable);
 
-    // 2. GANESHA STATUE / SHRINE (Elephant Clue)
+    // Glowing halo on Lord Ganesha's Idol at (656, 235)
+    const idolHalo = this.add.circle(656, 235, 48, 0xffd07b, 0.45);
+    idolHalo.setDepth(3);
+    this.tweens.add({
+      targets: idolHalo,
+      scaleX: 1.25,
+      scaleY: 1.25,
+      alpha: 0.75,
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // 2. LORD GANESHA IDOL (Final Astha Quest & The Sacred Journey Mystery)
     this.interactionManager.register(new Interactable({
       id: 'ganesha_shrine',
       x: 656,
       y: 245,
-      radius: 80,
-      promptText: '[E] Pray at Ganesha Shrine',
-      onInteract: () => {
-        this.soundManager.playInteraction();
-        GameState.setLevel4Field('shrineExamined', true);
-        this.events.emit(
-          'show-toast',
-          '🕉️ Lord Ganesha: The wise Elephant Lord who removes all obstacles and blesses your journey.',
-          4000
-        );
-      }
+      radius: 85,
+      promptText: '[E] Pray before Lord Ganesha\'s Idol',
+      onInteract: () => this.handleIdolPrayer()
     }));
 
     // 3. SACRED TEMPLE DIYAS ALTAR (Diya Clue)
@@ -333,6 +339,65 @@ export class Level4Scene extends Phaser.Scene {
     // Case 3: Already solved
     this.soundManager.playInteraction();
     this.events.emit('show-toast', 'The mechanism is active and aligned. Step into the sanctum light!', 3500);
+  }
+
+  private handleIdolPrayer() {
+    if (GameState.level4State.idolPrayed) {
+      this.events.emit(
+        'show-toast',
+        '✨ You have offered your prayers before Bappa\'s idol. Your pilgrimage through all realms guides your steps.',
+        4000
+      );
+      return;
+    }
+
+    // Mark idol prayed & shrine examined
+    GameState.setLevel4Field('idolPrayed', true);
+    GameState.setLevel4Field('shrineExamined', true);
+
+    // Grant 50 Astha (50 carried from Level 3 + 50 = 100/100 Total Astha)
+    GameState.addAstha(50);
+
+    // Unlock Hint 4
+    GameState.unlockHint(4);
+
+    // Audio
+    this.soundManager.playAsthaIncrease();
+    this.soundManager.playPuzzleSuccess();
+
+    // Floating sanctum sparkles
+    for (let i = 0; i < 18; i++) {
+      const sparkle = this.add.circle(
+        656 + Phaser.Math.Between(-40, 40),
+        235 + Phaser.Math.Between(-35, 35),
+        Phaser.Math.Between(2, 6),
+        0xfff0a0,
+        1
+      );
+      sparkle.setDepth(30);
+      this.tweens.add({
+        targets: sparkle,
+        y: sparkle.y - Phaser.Math.Between(40, 80),
+        x: sparkle.x + Phaser.Math.Between(-25, 25),
+        alpha: 0,
+        scale: 0.2,
+        duration: Phaser.Math.Between(800, 1400),
+        ease: 'Cubic.easeOut',
+        onComplete: () => sparkle.destroy()
+      });
+    }
+
+    this.events.emit(
+      'show-toast',
+      '✨ Divine Illumination! (+50 Astha, 100/100 Total) Full Pilgrimage sequence revealed for 5 seconds!',
+      4500
+    );
+
+    // Launch DivineHintModal showing newly unlocked Hint 4 and full journey revelation
+    this.time.delayedCall(400, () => {
+      this.scene.pause();
+      this.scene.launch('DivineHintModal', { newHintIndex: 4, returnScene: 'Level4Scene' });
+    });
   }
 
   private triggerArtefactInsertion() {

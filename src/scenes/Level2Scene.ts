@@ -33,15 +33,15 @@ export class Level2Scene extends Phaser.Scene {
   private isLevelCompleting = false;
   private vighnaPatrolTimer?: Phaser.Time.TimerEvent;
   private readonly VIGHNA_SPAWN_NODES = [
-    { x: 750, y: 160 },  // North central corridor
+    { x: 744, y: 232 },  // North central corridor
     { x: 1150, y: 160 }, // North east corridor
-    { x: 350, y: 200 },  // North west path
+    { x: 400, y: 200 },  // North west path
     { x: 300, y: 480 },  // West corridor junction
-    { x: 250, y: 700 },  // South west corridor
+    { x: 248, y: 552 },  // South west corridor
     { x: 600, y: 480 },  // West center corridor
     { x: 900, y: 480 },  // East center corridor
-    { x: 1200, y: 520 }, // East corridor
-    { x: 1220, y: 740 }, // South east inner corridor
+    { x: 1180, y: 480 }, // East corridor
+    { x: 1240, y: 728 }, // South east inner corridor
     { x: 1050, y: 880 }  // South corridor right
   ];
 
@@ -124,8 +124,7 @@ export class Level2Scene extends Phaser.Scene {
 
     // 7. Setup Interactive World Objects
     this.setupDiyaPickup();
-    this.setupAsthaDiscoveries();
-    this.setupBappaClues();
+    this.setupCornerShrines();
     this.setupExitGateway();
 
     // Check discovered shrines to restore their lights if any
@@ -295,82 +294,129 @@ export class Level2Scene extends Phaser.Scene {
     }));
   }
 
-  private setupAsthaDiscoveries() {
-    // Discovery #1: Ganesha Wall Painting (Top-Left Alcove)
-    const ganeshaX = 170;
-    const ganeshaY = 130;
+  private setupCornerShrines() {
+    // In Level 2, praying to Lord Ganesha's sacred idols grants Astha points.
+    // The maze features 3 sacred Bappa idols directly drawn in the chambers:
+    // 1) North-West Chamber Idol at (171, 140) -> grants +10 Astha (unlocks Hint 2 for 5s)
+    // 2) South-West Chamber Idol at (129, 890) -> grants +5 Astha
+    // 3) South-East Chamber Idol at (1405, 868) -> grants +5 Astha
+    // Total Level 2 Astha = 40 (20 from Level 1 + 20 from Level 2 idols).
+    const shrines = [
+      {
+        id: 'idol_nw',
+        index: 0 as const,
+        x: 171,
+        y: 140,
+        standY: 175,
+        name: 'Lord Ganesha Shrine (North-West)',
+        asthaAward: 10
+      },
+      {
+        id: 'idol_sw',
+        index: 1 as const,
+        x: 129,
+        y: 890,
+        standY: 925,
+        name: 'Lord Ganesha Shrine (South-West)',
+        asthaAward: 5
+      },
+      {
+        id: 'idol_se',
+        index: 2 as const,
+        x: 1405,
+        y: 868,
+        standY: 905,
+        name: 'Lord Ganesha Shrine (South-East)',
+        asthaAward: 5
+      }
+    ];
 
-    const ganeshaAura = this.add.circle(ganeshaX, ganeshaY, 26, 0xffd07b, 0.2);
-    this.tweens.add({
-      targets: ganeshaAura,
-      scale: 1.3,
-      alpha: 0.35,
-      duration: 1300,
-      yoyo: true,
-      repeat: -1
+    shrines.forEach((c) => {
+      // Golden aura breathing around the sacred idol
+      const aura = this.add.circle(c.x, c.y - 10, 32, 0xffd07b, 0.3);
+      aura.setDepth(6);
+      this.tweens.add({
+        targets: aura,
+        scale: 1.3,
+        alpha: 0.5,
+        duration: 1300 + c.index * 150,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+
+      // Subtle prayer prompt icon
+      const icon = this.add.text(c.x, c.y - 32, '✨', {
+        fontSize: '18px'
+      }).setOrigin(0.5).setDepth(8);
+
+      const label = this.add.text(c.x, c.y + 26, c.name, {
+        fontFamily: 'Cinzel, serif',
+        fontSize: '9.5px',
+        color: '#ffc168',
+        fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(8);
+
+      // Dedicated solid obstacle for each idol so the player CANNOT climb on it
+      const idolObstacle = this.add.rectangle(c.x, c.y, 60, 75, 0x000000, 0);
+      this.physics.add.existing(idolObstacle, true);
+      this.obstacles.add(idolObstacle);
+
+      // Interaction zone in front of the idol stand
+      this.interactionManager.register(new Interactable({
+        id: c.id,
+        x: c.x,
+        y: c.standY,
+        radius: 65,
+        promptText: `[E] Pray before ${c.name}`,
+        onInteract: () => {
+          if (!GameState.isCornerShrineExamined(c.index)) {
+            this.soundManager.playAsthaIncrease();
+            GameState.setCornerShrineExamined(c.index);
+            GameState.addAstha(c.asthaAward);
+            this.events.emit('astha-gained');
+            this.updateDiscoveredShrineLights();
+
+            // When praying to an idol that unlocks Hint 2 (or reaches Astha milestone)
+            if (!GameState.isHintUnlocked(2)) {
+              GameState.unlockHint(2);
+              this.events.emit('show-toast', '✨ Sacred blessing! 2nd Divine Key (DIYA) revealed for 5 seconds!', 4000);
+
+              // Launch Divine Hint Modal with 5-second auto-close
+              this.player.freeze();
+              this.scene.pause();
+              this.scene.launch('DivineHintModal', {
+                newHintIndex: 2,
+                returnScene: 'Level2Scene'
+              });
+            } else if (GameState.astha >= 40) {
+              this.events.emit('show-toast', `✨ All Bappa idols blessed! Full Astha reached (${GameState.astha}/40)!`, 3500);
+            } else {
+              this.events.emit('show-toast', `Bappa's blessing received! (+${c.asthaAward} ASTHA: ${GameState.astha}/40)`, 3200);
+            }
+          } else {
+            this.soundManager.playButtonClick();
+            this.player.freeze();
+            this.scene.pause();
+            this.scene.launch('DivineHintModal', {
+              returnScene: 'Level2Scene'
+            });
+          }
+        }
+      }));
     });
 
-    this.interactionManager.register(new Interactable({
-      id: 'astha_ganesha',
-      x: ganeshaX,
-      y: ganeshaY + 20,
-      radius: 70,
-      promptText: '[E] Pray before Ganesha Painting',
-      onInteract: () => {
-        if (!GameState.level2State.ganeshaPaintingExamined) {
-          this.soundManager.playAsthaIncrease();
-          GameState.addAstha(10);
-          GameState.setLevel2Field('ganeshaPaintingExamined', true);
-          this.events.emit('astha-gained');
-          this.events.emit('show-toast', 'Even in darkness, I am not alone. (+10 ASTHA)', 3200);
-          this.updateDiscoveredShrineLights();
-        } else {
-          this.soundManager.playInteraction();
-          this.events.emit('show-toast', 'The painting of Lord Ganesha radiates peaceful serenity.');
-        }
-      }
-    }));
-
-    // Discovery #2: Flower Offering (Bottom-Right Alcove)
-    const flowerX = 1400;
-    const flowerY = 860;
-
-    const flowerAura = this.add.circle(flowerX, flowerY, 24, 0xf5a623, 0.22);
-    this.tweens.add({
-      targets: flowerAura,
-      scale: 1.25,
-      alpha: 0.38,
-      duration: 1100,
-      yoyo: true,
-      repeat: -1
-    });
-
-    this.interactionManager.register(new Interactable({
-      id: 'astha_flowers',
-      x: flowerX,
-      y: flowerY + 15,
-      radius: 70,
-      promptText: '[E] Examine Devotional Offering',
-      onInteract: () => {
-        if (!GameState.level2State.flowerOfferingExamined) {
-          this.soundManager.playAsthaIncrease();
-          GameState.addAstha(10);
-          GameState.setLevel2Field('flowerOfferingExamined', true);
-          this.events.emit('astha-gained');
-          this.events.emit('show-toast', 'Someone has been here before me. (+10 ASTHA)', 3200);
-          this.updateDiscoveredShrineLights();
-        } else {
-          this.soundManager.playInteraction();
-          this.events.emit('show-toast', 'Fragrant marigolds and fresh petals offer quiet reassurance.');
-        }
-      }
-    }));
-
-    // Discovery #3: Central Altar / Sacred Shrine (Center Courtyard)
+    // Central Altar / Sacred Shrine (Center Courtyard)
     const shrineX = 750;
     const shrineY = 487;
 
+    // Solid collision for central altar so player cannot walk on top of it
+    const altarObstacle = this.add.rectangle(shrineX, shrineY, 68, 70, 0x000000, 0);
+    this.physics.add.existing(altarObstacle, true);
+    this.obstacles.add(altarObstacle);
+
     const shrineFlameGlow = this.add.circle(shrineX, shrineY, 36, 0xffd07b, 0.28);
+    shrineFlameGlow.setDepth(6);
     this.tweens.add({
       targets: shrineFlameGlow,
       scale: 1.35,
@@ -383,81 +429,14 @@ export class Level2Scene extends Phaser.Scene {
     this.interactionManager.register(new Interactable({
       id: 'astha_shrine',
       x: shrineX,
-      y: shrineY + 15,
-      radius: 80,
-      promptText: '[E] Approach Sacred Shrine Altar',
+      y: shrineY + 45,
+      radius: 70,
+      promptText: '[E] Inspect Central Flame Altar',
       onInteract: () => {
-        if (!GameState.level2State.sacredShrineExamined) {
-          this.soundManager.playAsthaIncrease();
-          GameState.addAstha(10);
-          GameState.setLevel2Field('sacredShrineExamined', true);
-          this.events.emit('astha-gained');
-          this.events.emit('show-toast', 'The sacred altar burns bright. (+10 ASTHA)', 3200);
-          this.updateDiscoveredShrineLights();
-        } else {
-          this.soundManager.playInteraction();
-          this.events.emit('show-toast', 'The sacred flame burns warm and steadfast.');
-        }
+        this.soundManager.playInteraction();
+        this.events.emit('show-toast', 'The sacred central flame burns warm and steadfast, sheltering you from shadows.');
       }
     }));
-  }
-
-  private setupBappaClues() {
-    const clues = [
-      {
-        id: 'clue_1',
-        x: 230,
-        y: 520,
-        text: "Bappa's sacred archway lies in the North-East. Let your holy Diya guide you through the darkness.",
-        symbol: 'ॐ'
-      },
-      {
-        id: 'clue_2',
-        x: 770,
-        y: 220,
-        text: 'Keep faith and stay vigilant. The shadows recoil before the holy Diya.',
-        symbol: '卐'
-      },
-      {
-        id: 'clue_3',
-        x: 1100,
-        y: 210,
-        text: 'The exit archway is near. Step into the light to find your way to Bappa.',
-        symbol: '✨'
-      }
-    ];
-
-    clues.forEach((clue, idx) => {
-      // Golden glowing sacred symbol in world
-      const symText = this.add.text(clue.x, clue.y, clue.symbol, {
-        fontFamily: 'Cinzel, serif',
-        fontSize: '20px',
-        color: '#ffd07b'
-      }).setOrigin(0.5).setDepth(8);
-
-      const glow = this.add.circle(clue.x, clue.y, 18, 0xd49b3d, 0.25);
-      this.tweens.add({
-        targets: [symText, glow],
-        alpha: 0.5,
-        duration: 1200,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
-
-      this.interactionManager.register(new Interactable({
-        id: clue.id,
-        x: clue.x,
-        y: clue.y,
-        radius: 65,
-        promptText: '[E] Read Sacred Inscription',
-        onInteract: () => {
-          this.soundManager.playClueDiscovered();
-          GameState.setClueFound(idx as 0 | 1 | 2);
-          this.events.emit('show-toast', `✨ "${clue.text}"`, 4000);
-        }
-      }));
-    });
   }
 
   private setupExitGateway() {
@@ -529,16 +508,21 @@ export class Level2Scene extends Phaser.Scene {
   public updateDiscoveredShrineLights() {
     this.torchLights = [];
 
-    // Shrines remain gently illuminated as landmarks once examined
-    if (GameState.level2State.ganeshaPaintingExamined) {
-      this.torchLights.push({ x: 170, y: 130, radius: 80 });
-    }
-    if (GameState.level2State.flowerOfferingExamined) {
-      this.torchLights.push({ x: 1400, y: 860, radius: 80 });
-    }
-    if (GameState.level2State.sacredShrineExamined) {
-      this.torchLights.push({ x: 750, y: 487, radius: 80 });
-    }
+    // The 3 Bappa Idols remain illuminated as landmarks once blessed
+    const cornerPositions = [
+      { x: 171, y: 140 },  // NW Idol
+      { x: 129, y: 890 },  // SW Idol
+      { x: 1405, y: 868 }  // SE Idol
+    ];
+
+    cornerPositions.forEach((pos, idx) => {
+      if (GameState.isCornerShrineExamined(idx as 0 | 1 | 2)) {
+        this.torchLights.push({ x: pos.x, y: pos.y, radius: 95 });
+      }
+    });
+
+    // Central Altar light
+    this.torchLights.push({ x: 750, y: 487, radius: 85 });
   }
 
   private spawnOrRelocateVighna() {

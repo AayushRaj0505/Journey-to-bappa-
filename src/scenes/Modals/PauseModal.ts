@@ -43,19 +43,19 @@ export class PauseModal extends Phaser.Scene {
     // 2. Pause Container
     const container = this.add.container(width / 2, height / 2);
 
-    // Modal frame
-    const frame = this.add.rectangle(0, 0, 560, 480, 0x180f08, 0.96);
+    // Modal frame (enlarged height to fit Divine Hints button cleanly)
+    const frame = this.add.rectangle(0, 0, 560, 520, 0x180f08, 0.96);
     frame.setStrokeStyle(2.5, 0xd49b3d, 0.95);
     container.add(frame);
 
-    const innerBorder = this.add.rectangle(0, 0, 532, 452, 0x110904, 0.8);
+    const innerBorder = this.add.rectangle(0, 0, 532, 492, 0x110904, 0.8);
     innerBorder.setStrokeStyle(1, 0x8b6508, 0.6);
     container.add(innerBorder);
 
     // Title
-    const title = this.add.text(0, -185, '⏸  GAME PAUSED', {
+    const title = this.add.text(0, -210, '⏸  GAME PAUSED', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '26px',
+      fontSize: '25px',
       color: '#ffd07b',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -69,16 +69,16 @@ export class PauseModal extends Phaser.Scene {
     };
 
     const currentLevelName = levelNameMap[this.parentSceneKey] || 'CURRENT QUEST';
-    const levelLabel = this.add.text(0, -145, currentLevelName, {
+    const levelLabel = this.add.text(0, -172, currentLevelName, {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '13px',
       color: '#d4b182',
       letterSpacing: 2
     }).setOrigin(0.5);
 
-    const goalBox = this.add.rectangle(0, -112, 460, 32, 0x22140a, 0.9);
+    const goalBox = this.add.rectangle(0, -138, 460, 30, 0x22140a, 0.9);
     goalBox.setStrokeStyle(1, 0x8b6508, 0.5);
-    const goalText = this.add.text(0, -112, `Goal: ${GameState.objective}`, {
+    const goalText = this.add.text(0, -138, `Goal: ${GameState.objective}`, {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '12px',
       color: '#ffc168'
@@ -87,33 +87,38 @@ export class PauseModal extends Phaser.Scene {
     container.add([title, levelLabel, goalBox, goalText]);
 
     // 3. Menu Options
-    const startY = -48;
-    const gapY = 50;
+    const startY = -85;
+    const gapY = 46;
 
     // [RESUME]
     this.createPauseButton(container, 0, startY, '▶  RESUME GAME', 0x6b3f1b, 0xffe29a, () => {
       this.resumeGame();
     }, true);
 
+    // [DIVINE HINTS (Astha Revelations)]
+    this.createPauseButton(container, 0, startY + gapY, '📜  VIEW DIVINE HINTS', 0x3d2310, 0xffd07b, () => {
+      this.openDivineHints();
+    });
+
     // [RESTART LEVEL]
-    this.createPauseButton(container, 0, startY + gapY, '🔄  RESTART LEVEL', 0x2b1c11, 0xe0c297, () => {
+    this.createPauseButton(container, 0, startY + gapY * 2, '🔄  RESTART LEVEL', 0x2b1c11, 0xe0c297, () => {
       this.restartCurrentLevel();
     });
 
     // [CONTROLS & HELP]
-    this.createPauseButton(container, 0, startY + gapY * 2, '🎮  CONTROLS & HOW TO PLAY', 0x2b1c11, 0xe0c297, () => {
+    this.createPauseButton(container, 0, startY + gapY * 3, '🎮  CONTROLS & HOW TO PLAY', 0x2b1c11, 0xe0c297, () => {
       this.toggleGuideOverlay(width, height);
     });
 
     // [SOUND TOGGLE]
     const isMuted = sound.isAudioMuted();
-    const soundBtn = this.add.rectangle(0, startY + gapY * 3, 300, 42, 0x2b1c11, 0.95);
+    const soundBtn = this.add.rectangle(0, startY + gapY * 4, 300, 38, 0x2b1c11, 0.95);
     soundBtn.setStrokeStyle(1.5, 0x9e7339, 0.9);
     soundBtn.setInteractive({ useHandCursor: true });
 
-    this.soundBtnText = this.add.text(0, startY + gapY * 3, isMuted ? '🔇  SOUND: OFF' : '🔊  SOUND: ON', {
+    this.soundBtnText = this.add.text(0, startY + gapY * 4, isMuted ? '🔇  SOUND: OFF' : '🔊  SOUND: ON', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '14px',
+      fontSize: '13px',
       color: isMuted ? '#a68266' : '#ffd07b',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -137,12 +142,12 @@ export class PauseModal extends Phaser.Scene {
     container.add([soundBtn, this.soundBtnText]);
 
     // [MAIN MENU]
-    this.createPauseButton(container, 0, startY + gapY * 4, '🏠  RETURN TO MAIN MENU', 0x25140b, 0xd4b182, () => {
+    this.createPauseButton(container, 0, startY + gapY * 5, '🏠  RETURN TO MAIN MENU', 0x25140b, 0xd4b182, () => {
       this.returnToMainMenu();
     });
 
     // Sub-text
-    const escHint = this.add.text(0, 205, 'Press [ESC] or [P] to Resume', {
+    const escHint = this.add.text(0, 228, 'Press [ESC] or [P] to Resume', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '12px',
       color: '#9e7b57'
@@ -309,6 +314,13 @@ export class PauseModal extends Phaser.Scene {
       this.scene.start('Level4Scene');
     }
     this.scene.launch('UIScene');
+  }
+
+  private openDivineHints() {
+    SoundManager.getInstance().playButtonClick();
+    this.scene.launch('DivineHintModal', {
+      returnScene: 'PauseModal'
+    });
   }
 
   private returnToMainMenu() {

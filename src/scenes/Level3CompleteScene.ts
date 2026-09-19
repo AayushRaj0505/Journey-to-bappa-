@@ -53,31 +53,30 @@ export class Level3CompleteScene extends Phaser.Scene {
 
     container.add([subtitle, title]);
 
-    // Showcase Box for the Fused Complete Circular Artefact
-    const artefactBox = this.add.rectangle(0, -45, 200, 160, 0x120a04, 1);
-    artefactBox.setStrokeStyle(2.5, 0xd49b3d, 0.9);
+    // Level 3 Completion Badge & Astha Summary
+    const completeBadge = this.add.rectangle(0, -45, 340, 110, 0x120a04, 1);
+    completeBadge.setStrokeStyle(2, 0xd49b3d, 0.85);
 
-    const artefactImg = this.add.image(0, -45, 'item_artifact_complete');
-    artefactImg.setScale(0.58);
-
-    const artefactGlow = this.add.circle(0, -45, 75, 0xffd07b, 0.25);
-    this.tweens.add({
-      targets: artefactGlow,
-      alpha: 0.5,
-      scale: 1.2,
-      duration: 1100,
-      yoyo: true,
-      repeat: -1
-    });
-
-    const artefactLabel = this.add.text(0, 50, '✨ COMPLETE CIRCULAR ARTEFACT (LEVEL 4 KEY)', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '14px',
-      color: '#4eed94',
-      fontStyle: 'bold'
+    const checkIcon = this.add.text(0, -68, '✨ 🔑 ✨', {
+      fontSize: '28px'
     }).setOrigin(0.5);
 
-    container.add([artefactBox, artefactGlow, artefactImg, artefactLabel]);
+    const asthaScore = this.add.text(0, -28, `ASTHA: ${GameState.astha} / ${GameState.maxAstha}`, {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '18px',
+      color: '#52e896',
+      fontStyle: 'bold',
+      letterSpacing: 2
+    }).setOrigin(0.5);
+
+    const badgeSub = this.add.text(0, 2, 'THE SACRED SEAL IS READY FOR THE TEMPLE', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '11px',
+      color: '#ffd07b',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    container.add([completeBadge, checkIcon, asthaScore, badgeSub]);
 
     // Story Lore & Emotion
     const lore = this.add.text(0, 115,

@@ -1,12 +1,19 @@
-import { Level1Puzzles, Level2State, Level3State, Level4State, InventoryItem } from './Types';
+import { Level1Puzzles, Level2State, Level3State, Level4State, InventoryItem, DivineHints } from './Types';
 
 type StateListener = () => void;
 
 class GameStateManager {
   private _currentLevel: 1 | 2 | 3 | 4 = 1;
-  private _astha: number = 20;
-  private _maxAstha: number = 50;
+  private _astha: number = 0;
+  private _maxAstha: number = 20;
   private _inventory: Set<InventoryItem> = new Set();
+
+  private _unlockedHints: DivineHints = {
+    hint1: false,
+    hint2: false,
+    hint3: false,
+    hint4: false
+  };
 
   private _puzzles: Level1Puzzles = {
     noteExamined: false,
@@ -16,7 +23,8 @@ class GameStateManager {
     boxUnlocked: false,
     drawerUnlocked: false,
     panelOpened: false,
-    doorUnlocked: false
+    doorUnlocked: false,
+    bappaPrayed: false
   };
 
   private _level2State: Level2State = {
@@ -24,6 +32,7 @@ class GameStateManager {
     ganeshaPaintingExamined: false,
     flowerOfferingExamined: false,
     sacredShrineExamined: false,
+    cornerShrines: [false, false, false, false],
     cluesFound: [false, false, false],
     vighnaEncountered: false,
     level2Complete: false
@@ -37,7 +46,8 @@ class GameStateManager {
     paintingsExamined: [false, false, false, false],
     boxUnlocked: false,
     doorUnlocked: false,
-    level3Complete: false
+    level3Complete: false,
+    bappaPrayed: false
   };
 
   private _level4State: Level4State = {
@@ -50,7 +60,8 @@ class GameStateManager {
     diyaAltarExamined: false,
     tridentBannerExamined: false,
     templeBellExamined: false,
-    plaqueExamined: false
+    plaqueExamined: false,
+    idolPrayed: false
   };
 
   private _objective: string = "Find a way to open the door.";
@@ -138,12 +149,43 @@ class GameStateManager {
     return this._puzzles[key];
   }
 
+  public get unlockedHints(): DivineHints {
+    return { ...this._unlockedHints };
+  }
+
+  public unlockHint(index: 1 | 2 | 3 | 4) {
+    const key = `hint${index}` as keyof DivineHints;
+    if (!this._unlockedHints[key]) {
+      this._unlockedHints[key] = true;
+      this.notify();
+    }
+  }
+
+  public isHintUnlocked(index: 1 | 2 | 3 | 4): boolean {
+    const key = `hint${index}` as keyof DivineHints;
+    return this._unlockedHints[key];
+  }
+
+  public setCornerShrineExamined(index: 0 | 1 | 2 | 3) {
+    if (!this._level2State.cornerShrines[index]) {
+      this._level2State.cornerShrines[index] = true;
+      this.notify();
+    }
+  }
+
+  public isCornerShrineExamined(index: 0 | 1 | 2 | 3): boolean {
+    return this._level2State.cornerShrines[index];
+  }
+
   // --- Level 2 Methods ---
   public startLevel2() {
     const hadArtifact = this._inventory.has('Artefact_Fragment');
     this._currentLevel = 2;
-    this._maxAstha = 50;
-    this._astha = 20;
+    this._maxAstha = 40;
+    // Level 2 max is 40. Astha accumulates from Level 1 (20) or stays at current astha
+    if (this._astha > 40) {
+      this._astha = 40;
+    }
     this._inventory.clear(); // Fresh inventory for level 2, preserving sacred fragment
     if (hadArtifact) {
       this._inventory.add('Artefact_Fragment');
@@ -153,6 +195,7 @@ class GameStateManager {
       ganeshaPaintingExamined: false,
       flowerOfferingExamined: false,
       sacredShrineExamined: false,
+      cornerShrines: [false, false, false, false],
       cluesFound: [false, false, false],
       vighnaEncountered: false,
       level2Complete: false
@@ -200,9 +243,9 @@ class GameStateManager {
   // --- Level 3 Methods ---
   public startLevel3() {
     this._currentLevel = 3;
-    this._maxAstha = 80;
-    // Retain existing Astha or default to 50
-    if (this._astha < 50) {
+    this._maxAstha = 50;
+    // Astha carries forward from Level 2 (40 Astha), max is now 50
+    if (this._astha > 50) {
       this._astha = 50;
     }
     // Ensure player carries the first artefact fragment from Level 1
@@ -217,7 +260,8 @@ class GameStateManager {
       paintingsExamined: [false, false, false, false],
       boxUnlocked: false,
       doorUnlocked: false,
-      level3Complete: false
+      level3Complete: false,
+      bappaPrayed: false
     };
     this.updateObjective();
     this.notify();
@@ -233,7 +277,10 @@ class GameStateManager {
   public startLevel4() {
     this._currentLevel = 4;
     this._maxAstha = 100;
-    this._astha = 100; // Peaceful full faith in the sanctuary
+    // In Level 4, player carries 50 Astha from Level 3. Praying before Bappa's idol grants +50 Astha (reaching 100).
+    if (this._astha < 50) {
+      this._astha = 50;
+    }
     // Ensure player carries the completed circular artefact
     if (!this._inventory.has('Completed_Artefact')) {
       this._inventory.add('Completed_Artefact');
@@ -248,7 +295,8 @@ class GameStateManager {
       diyaAltarExamined: false,
       tridentBannerExamined: false,
       templeBellExamined: false,
-      plaqueExamined: false
+      plaqueExamined: false,
+      idolPrayed: false
     };
     this.updateObjective();
     this.notify();
@@ -322,9 +370,15 @@ class GameStateManager {
 
   public reset() {
     this._currentLevel = 1;
-    this._maxAstha = 50;
-    this._astha = 20;
+    this._maxAstha = 20;
+    this._astha = 0;
     this._inventory.clear();
+    this._unlockedHints = {
+      hint1: false,
+      hint2: false,
+      hint3: false,
+      hint4: false
+    };
     this._puzzles = {
       noteExamined: false,
       lockerUnlocked: false,
@@ -333,13 +387,15 @@ class GameStateManager {
       boxUnlocked: false,
       drawerUnlocked: false,
       panelOpened: false,
-      doorUnlocked: false
+      doorUnlocked: false,
+      bappaPrayed: false
     };
     this._level2State = {
       diyaPickedUp: false,
       ganeshaPaintingExamined: false,
       flowerOfferingExamined: false,
       sacredShrineExamined: false,
+      cornerShrines: [false, false, false, false],
       cluesFound: [false, false, false],
       vighnaEncountered: false,
       level2Complete: false
@@ -352,7 +408,8 @@ class GameStateManager {
       paintingsExamined: [false, false, false, false],
       boxUnlocked: false,
       doorUnlocked: false,
-      level3Complete: false
+      level3Complete: false,
+      bappaPrayed: false
     };
     this._level4State = {
       artefactPlaced: false,
@@ -364,7 +421,8 @@ class GameStateManager {
       diyaAltarExamined: false,
       tridentBannerExamined: false,
       templeBellExamined: false,
-      plaqueExamined: false
+      plaqueExamined: false,
+      idolPrayed: false
     };
     this._objective = "Find a way to open the door.";
     this.notify();

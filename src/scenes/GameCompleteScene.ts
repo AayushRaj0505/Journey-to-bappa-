@@ -131,7 +131,7 @@ export class GameCompleteScene extends Phaser.Scene {
       { icon: '🗝️', label: 'Bedroom Escape' },
       { icon: '🪔', label: 'Astha Preserved' },
       { icon: '🧩', label: 'Artefact Reunited' },
-      { icon: '🕉️', label: 'Sanctum Blessed' }
+      { icon: '🛕', label: 'Sanctum Blessed' }
     ];
 
     const startBadgeX = -270;

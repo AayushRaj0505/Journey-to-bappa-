@@ -53,36 +53,34 @@ export class LevelCompleteScene extends Phaser.Scene {
 
     container.add([subtitle, title]);
 
-    // Fragment Showcase Box
-    const fragBox = this.add.rectangle(0, -35, 170, 170, 0x130b05, 1);
-    fragBox.setStrokeStyle(2, 0xd49b3d, 0.8);
+    // Astha & Quest Complete Banner
+    const victoryBadge = this.add.rectangle(0, -45, 260, 110, 0x180f08, 0.95);
+    victoryBadge.setStrokeStyle(2, 0xd49b3d, 0.9);
 
-    const fragImg = this.add.image(0, -35, 'item_artifact');
-    fragImg.setScale(0.55);
+    const victoryIcon = this.add.text(0, -68, '🚪✨', {
+      fontSize: '32px'
+    }).setOrigin(0.5);
 
-    const fragGlow = this.add.circle(0, -35, 75, 0xffd07b, 0.15);
-    this.tweens.add({
-      targets: fragGlow,
-      alpha: 0.35,
-      scale: 1.1,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1
-    });
-
-    const fragLabel = this.add.text(0, 65, '✨ SACRED ARTEFACT FRAGMENT (1/4)', {
+    const victoryLabel = this.add.text(0, -32, 'BEDROOM SANCTUARY UNLOCKED', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '14px',
+      fontSize: '13px',
+      color: '#ffd07b',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    const asthaLabel = this.add.text(0, -10, `🪔 ASTHA: ${GameState.astha} / ${GameState.maxAstha} (1st Divine Clue Unlocked)`, {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '12px',
       color: '#4eed94',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    container.add([fragBox, fragGlow, fragImg, fragLabel]);
+    container.add([victoryBadge, victoryIcon, victoryLabel, asthaLabel]);
 
     // Story Text
-    const lore = this.add.text(0, 115, 
+    const lore = this.add.text(0, 75, 
       'With keen observation and wits, the bedroom door swings open.\n' +
-      'Holding the sacred stone fragment close, the child takes their first brave step forward.\n' +
+      'Holding your holy faith close, you take your first brave step forward.\n' +
       'Bappa\'s blessings guide the path ahead...', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '15px',

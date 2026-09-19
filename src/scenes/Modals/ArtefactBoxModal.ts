@@ -29,24 +29,24 @@ export class ArtefactBoxModal extends Phaser.Scene {
     this.animContainer = this.add.container(width / 2, height / 2);
 
     // Stone / antique brass housing
-    const panel = this.add.rectangle(0, 0, 480, 520, 0x1f140b, 0.96);
+    const panel = this.add.rectangle(0, 0, 480, 540, 0x1f140b, 0.96);
     panel.setStrokeStyle(3, 0xd49b3d, 0.9);
     this.animContainer.add(panel);
 
     // Decorative inner border
-    const innerBorder = this.add.rectangle(0, 0, 456, 496, 0x140c06, 0.7);
+    const innerBorder = this.add.rectangle(0, 0, 456, 516, 0x140c06, 0.7);
     innerBorder.setStrokeStyle(1.5, 0x8b6508, 0.6);
     this.animContainer.add(innerBorder);
 
     // Title
-    const subtitle = this.add.text(0, -215, 'ROOM COMPARTMENT', {
+    const subtitle = this.add.text(0, -230, 'ROOM COMPARTMENT', {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '12px',
       color: '#d4b182',
       letterSpacing: 2
     }).setOrigin(0.5);
 
-    const title = this.add.text(0, -185, '🔒 SECRET ROOM LOCKER', {
+    const title = this.add.text(0, -200, '🔒 SECRET ROOM LOCKER', {
       fontFamily: 'Cinzel, serif',
       fontSize: '22px',
       color: '#ffd07b',
@@ -197,6 +197,38 @@ export class ArtefactBoxModal extends Phaser.Scene {
         this.animContainer.add([btnBg, btnTxt]);
       });
     });
+
+    // Morse Code Quick Reference Button
+    const chartBtnY = 212;
+    const chartBtn = this.add.rectangle(0, chartBtnY, 260, 32, 0x36210f, 0.95);
+    chartBtn.setStrokeStyle(1.5, 0xffd07b, 0.85);
+    chartBtn.setInteractive({ useHandCursor: true });
+
+    const chartTxt = this.add.text(0, chartBtnY, '📻 VIEW MORSE CODE CHART', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '12px',
+      color: '#ffd07b',
+      fontStyle: 'bold',
+      letterSpacing: 1
+    }).setOrigin(0.5);
+
+    chartBtn.on('pointerdown', () => {
+      this.soundManager.playButtonClick();
+      this.scene.pause();
+      this.scene.launch('MorseChartModal');
+    });
+
+    chartBtn.on('pointerover', () => {
+      chartBtn.setFillStyle(0x5a3820);
+      chartBtn.setStrokeStyle(2, 0xffe29a);
+    });
+
+    chartBtn.on('pointerout', () => {
+      chartBtn.setFillStyle(0x36210f);
+      chartBtn.setStrokeStyle(1.5, 0xffd07b, 0.85);
+    });
+
+    this.animContainer.add([chartBtn, chartTxt]);
   }
 
   private handleLetterInput(letter: string) {
@@ -249,14 +281,25 @@ export class ArtefactBoxModal extends Phaser.Scene {
         GameState.combineArtefacts();
         GameState.setLevel3Field('boxUnlocked', true);
 
+        // Finding the artefact in Level 3 grants 10 Astha (bringing total to 50/50)
+        this.soundManager.playAsthaIncrease();
+        GameState.addAstha(10);
+        GameState.unlockHint(3);
+
         // Notify parent level scene
         const lvl3 = this.scene.get('Level3Scene');
         if (lvl3) {
-          lvl3.events.emit('show-toast', '✨ Both fragments fuse into the Complete Circular Artefact (Level 4 Key)!', 4000);
+          lvl3.events.emit('show-toast', '✨ Artefact Found! (+10 Astha, 50/50 Total) 3rd Divine Key (TRIDENT) revealed for 5 seconds!', 4500);
+          lvl3.events.emit('astha-gained');
         }
 
-        this.time.delayedCall(900, () => {
+        this.time.delayedCall(700, () => {
           this.closeModal();
+          // Launch DivineHintModal with 5-second auto-close
+          this.scene.launch('DivineHintModal', {
+            newHintIndex: 3,
+            returnScene: 'Level3Scene'
+          });
         });
       });
     } else {

@@ -107,6 +107,36 @@ export class UIScene extends Phaser.Scene {
 
     const bg = this.add.rectangle(0, 0, 190, 44, 0x18100a, 0.92);
     bg.setStrokeStyle(1.5, 0xd49b3d, 0.85);
+    bg.setInteractive({ useHandCursor: true });
+
+    // Clicking Astha HUD opens the Divine Hints modal
+    bg.on('pointerdown', () => {
+      const modalKeys = [
+        'PauseModal', 'NoteModal', 'KeypadModal', 'MatClueModal',
+        'IconPuzzleModal', 'OpendBoxModal', 'Level3CloseupModal',
+        'ArtefactBoxModal', 'Level3DoorKeypadModal', 'Level4ImagePuzzleModal',
+        'DivineHintModal', 'MorseChartModal'
+      ];
+      for (const key of modalKeys) {
+        if (this.scene.isActive(key)) return;
+      }
+
+      const levelScenes = ['Level1Scene', 'Level2Scene', 'Level3Scene', 'Level4Scene'];
+      for (const lvl of levelScenes) {
+        if (this.scene.isActive(lvl)) {
+          this.scene.launch('DivineHintModal', { returnScene: lvl });
+          break;
+        }
+      }
+    });
+
+    bg.on('pointerover', () => {
+      bg.setStrokeStyle(2, 0xffe29a);
+      this.showToast('Click to view Divine Password Hints', 2000);
+    });
+    bg.on('pointerout', () => {
+      bg.setStrokeStyle(1.5, 0xd49b3d, 0.85);
+    });
 
     const icon = this.add.text(-75, 0, '🪔', {
       fontSize: '20px'
@@ -171,8 +201,8 @@ export class UIScene extends Phaser.Scene {
     const bg = this.add.rectangle(0, 0, 520, 44, 0x18100a, 0.88);
     bg.setStrokeStyle(1.5, 0xd49b3d, 0.7);
 
-    const icon = this.add.text(-235, 0, '🕉️', {
-      fontSize: '18px'
+    const icon = this.add.text(-235, 0, '⭐', {
+      fontSize: '17px'
     }).setOrigin(0.5);
 
     const titlePrefix = this.add.text(-210, 0, 'GOAL:', {
@@ -396,7 +426,8 @@ export class UIScene extends Phaser.Scene {
       const modalKeys = [
         'PauseModal', 'NoteModal', 'KeypadModal', 'MatClueModal',
         'IconPuzzleModal', 'OpendBoxModal', 'Level3CloseupModal',
-        'ArtefactBoxModal', 'Level3DoorKeypadModal', 'Level4ImagePuzzleModal'
+        'ArtefactBoxModal', 'Level3DoorKeypadModal', 'Level4ImagePuzzleModal',
+        'DivineHintModal', 'MorseChartModal'
       ];
       for (const key of modalKeys) {
         if (this.scene.isActive(key)) {
@@ -433,7 +464,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private updateHUD() {
-    const showAstha = GameState.currentLevel === 2 || GameState.currentLevel === 3 || GameState.currentLevel === 4;
+    const showAstha = true;
 
     // Toggle Astha HUD visibility
     if (this.asthaContainer) {
