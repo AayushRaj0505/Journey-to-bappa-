@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>The Journey to Bappa - Level 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="screen-orientation" content="landscape">
+  <title>The Journey to Bappa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,6 +14,23 @@
   <div id="game-app">
     <div id="game-container"></div>
   </div>
+
+  <!-- Mobile Landscape Mode Overlay -->
+  <div id="rotate-prompt">
+    <div class="rotate-card">
+      <div class="phone-icon-wrapper">
+        <div class="phone-device">
+          <div class="phone-screen">
+            <span class="phone-om">ॐ</span>
+          </div>
+        </div>
+      </div>
+      <h2 class="rotate-title">ROTATE TO LANDSCAPE</h2>
+      <p class="rotate-sub">“The Journey to Bappa” is designed to be played horizontally for the full immersive experience.</p>
+      <button id="rotate-btn" type="button">⛶  ENTER FULLSCREEN LANDSCAPE</button>
+    </div>
+  </div>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

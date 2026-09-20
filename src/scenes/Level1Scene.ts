@@ -188,67 +188,17 @@ export class Level1Scene extends Phaser.Scene {
   }
 
   private createBappaShrineVisuals() {
-    const shrineX = 520;
-    const shrineY = 172;
+    const shrineX = 395;
+    const shrineY = 180;
 
-    // Dedicated prayer mat on the floor in front of the altar
-    const prayerRug = this.add.rectangle(shrineX, 262, 76, 44, 0x6e2215, 0.9);
-    prayerRug.setStrokeStyle(1.5, 0xd49b3d, 0.8);
-    prayerRug.setDepth(1);
-
-    const rugInner = this.add.rectangle(shrineX, 262, 64, 32, 0x4d150b, 0.9);
-    rugInner.setStrokeStyle(1, 0xffd07b, 0.6);
-    rugInner.setDepth(1);
-
-    const rugOm = this.add.text(shrineX, 262, 'ॐ', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '18px',
-      color: '#ffd07b'
-    }).setOrigin(0.5).setDepth(1);
-
-    // Golden divine pulsating aura behind the painting
-    const bappaAura = this.add.circle(shrineX, shrineY, 52, 0xffd07b, 0.25);
+    // Soft divine golden aura over Lord Ganesha wall poster
+    const bappaAura = this.add.circle(shrineX, shrineY, 48, 0xffd07b, 0.22);
     bappaAura.setDepth(2);
     this.tweens.add({
       targets: bappaAura,
-      scale: 1.3,
-      alpha: 0.42,
-      duration: 1500,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Ornate wooden & gold framed painting on the wall
-    const frameBg = this.add.rectangle(shrineX, shrineY, 74, 94, 0x2b170c);
-    frameBg.setStrokeStyle(2.5, 0xd49b3d, 0.95);
-    frameBg.setDepth(2);
-
-    const innerTrim = this.add.rectangle(shrineX, shrineY, 66, 86, 0x180f08);
-    innerTrim.setStrokeStyle(1, 0xffd07b, 0.5);
-    innerTrim.setDepth(2);
-
-    // Sacred Lord Ganesha Painting image
-    if (this.textures.exists('bappa_painting')) {
-      const bappaImg = this.add.image(shrineX, shrineY, 'bappa_painting');
-      bappaImg.setDisplaySize(62, 82);
-      bappaImg.setDepth(3);
-    }
-
-    // Small wall altar shelf below the frame
-    const shelf = this.add.rectangle(shrineX, shrineY + 52, 88, 8, 0x4a2c14);
-    shelf.setStrokeStyle(1.5, 0xd49b3d, 0.85);
-    shelf.setDepth(3);
-
-    // Glowing sacred Diya placed on shelf
-    const diyaText = this.add.text(shrineX, shrineY + 46, '🪔', {
-      fontSize: '17px'
-    }).setOrigin(0.5).setDepth(4);
-
-    this.tweens.add({
-      targets: diyaText,
-      scale: 1.18,
-      duration: 850,
+      scale: 1.25,
+      alpha: 0.38,
+      duration: 1600,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
@@ -474,10 +424,10 @@ export class Level1Scene extends Phaser.Scene {
     // 12. Bappa Sacred Image (Pray to Bappa -> +20 Astha -> Unlocks 1st Password Hint: Elephant)
     this.interactionManager.register(new Interactable({
       id: 'bappa_shrine',
-      x: 520,
+      x: 395,
       y: 250,
       radius: 110,
-      promptText: '[E] Pray before Bappa',
+      promptText: '[E] Pray before Lord Ganesha\'s Poster',
       onInteract: () => {
         if (!GameState.isPuzzleSolved('bappaPrayed')) {
           GameState.setPuzzleState('bappaPrayed', true);

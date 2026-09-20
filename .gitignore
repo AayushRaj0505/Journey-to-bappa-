@@ -31,3 +31,6 @@ dist-ssr
 # Temporary files & artifacts
 scratch/
 .tempmediaStorage/
+
+# Folder
+docs/

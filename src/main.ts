@@ -41,7 +41,9 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1024,
+    height: 768
   },
   scene: [
     BootScene,
@@ -73,6 +75,67 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 window.addEventListener('load', () => {
-  new Phaser.Game(config);
+  const game = new Phaser.Game(config);
+
+  // Helper to request fullscreen and lock landscape orientation
+  const requestLandscape = async () => {
+    try {
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      // Ignored if user interaction requirement or permissions fail
+    }
+
+    try {
+      if (screen.orientation && 'lock' in screen.orientation) {
+        await (screen.orientation as any).lock('landscape');
+      }
+    } catch {
+      // Ignored if orientation lock not supported on browser/iOS Safari
+    }
+
+    setTimeout(() => {
+      game.scale.refresh();
+    }, 200);
+  };
+
+  // Wire rotate button and touch on rotate prompt
+  const rotateBtn = document.getElementById('rotate-btn');
+  if (rotateBtn) {
+    rotateBtn.addEventListener('click', requestLandscape);
+    rotateBtn.addEventListener('touchend', requestLandscape);
+  }
+
+  // Refresh scale when orientation changes or screen resizes
+  window.addEventListener('resize', () => {
+    setTimeout(() => {
+      game.scale.refresh();
+    }, 150);
+  });
+
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      game.scale.refresh();
+    }, 250);
+  });
+
+  if (screen.orientation) {
+    screen.orientation.addEventListener('change', () => {
+      setTimeout(() => {
+        game.scale.refresh();
+      }, 200);
+    });
+  }
+
+  // Attempt orientation lock on first touch interaction anywhere
+  window.addEventListener('touchstart', function tryLockOnFirstTouch() {
+    try {
+      if (screen.orientation && 'lock' in screen.orientation) {
+        (screen.orientation as any).lock('landscape').catch(() => {});
+      }
+    } catch {}
+    window.removeEventListener('touchstart', tryLockOnFirstTouch);
+  }, { passive: true });
 });
 
