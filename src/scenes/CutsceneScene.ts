@@ -66,29 +66,6 @@ export class CutsceneScene extends Phaser.Scene {
       letterSpacing: 2
     }).setOrigin(0.5).setDepth(51);
 
-    // Header Main Menu Button (Top Right)
-    const menuBtn = this.add.rectangle(width - 90, 30, 130, 34, 0x3d200e, 0.95);
-    menuBtn.setStrokeStyle(1.5, 0xffd07b, 0.9);
-    menuBtn.setInteractive({ useHandCursor: true }).setDepth(51);
-
-    const menuTxt = this.add.text(width - 90, 30, '🏠 MAIN MENU', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '11px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(52);
-
-    menuBtn.on('pointerdown', (e: Phaser.Input.Pointer) => {
-      e.event.stopPropagation();
-      this.soundManager.playButtonClick();
-      this.stopCurrentAudio();
-      this.scene.stop('CutsceneScene');
-      this.scene.start('MainMenuScene');
-    });
-
-    menuBtn.on('pointerover', () => menuBtn.setFillStyle(0x6e3919));
-    menuBtn.on('pointerout', () => menuBtn.setFillStyle(0x3d200e));
-
     // Footer Counter Badge
     this.counterText = this.add.text(45, height - 35, `1 / ${this.dataConfig.images.length}`, {
       fontFamily: 'Outfit, sans-serif',

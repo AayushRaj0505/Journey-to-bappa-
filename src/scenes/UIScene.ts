@@ -6,6 +6,7 @@ import { SoundManager } from '../systems/SoundManager';
 
 export class UIScene extends Phaser.Scene {
   private objectiveContainer!: Phaser.GameObjects.Container;
+  private objectiveBg!: Phaser.GameObjects.Rectangle;
   private objectiveText!: Phaser.GameObjects.Text;
   private asthaContainer!: Phaser.GameObjects.Container;
   private asthaText!: Phaser.GameObjects.Text;
@@ -208,30 +209,30 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createObjectiveHUD(width: number) {
-    this.objectiveContainer = this.add.container(width / 2 + 15, 34);
+    this.objectiveContainer = this.add.container(width / 2, 34);
 
-    // Backdrop (sized to 430 for clean side-by-side with Astha & Pause button)
-    const bg = this.add.rectangle(0, 0, 430, 42, 0x18100a, 0.92);
-    bg.setStrokeStyle(1.5, 0xd49b3d, 0.75);
+    // Backdrop with golden border
+    this.objectiveBg = this.add.rectangle(0, 0, 440, 42, 0x18100a, 0.92);
+    this.objectiveBg.setStrokeStyle(1.5, 0xd49b3d, 0.75);
 
-    const icon = this.add.text(-195, 0, '⭐', {
+    const icon = this.add.text(-200, 0, '⭐', {
       fontSize: '16px'
     }).setOrigin(0.5);
 
-    const titlePrefix = this.add.text(-174, 0, 'GOAL:', {
+    const titlePrefix = this.add.text(-180, 0, 'GOAL:', {
       fontFamily: 'Cinzel, serif',
       fontSize: '12px',
       color: '#ffc168',
       fontStyle: 'bold'
     }).setOrigin(0, 0.5);
 
-    this.objectiveText = this.add.text(-122, 0, GameState.objective, {
+    this.objectiveText = this.add.text(-130, 0, GameState.objective, {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '13px',
       color: '#ffffff'
     }).setOrigin(0, 0.5);
 
-    this.objectiveContainer.add([bg, icon, titlePrefix, this.objectiveText]);
+    this.objectiveContainer.add([this.objectiveBg, icon, titlePrefix, this.objectiveText]);
   }
 
   private createInventoryHUD(width: number, height: number) {
@@ -677,22 +678,7 @@ export class UIScene extends Phaser.Scene {
     }).setOrigin(0.5);
   }
 
-  private createPauseButton(width: number) {
-    const pauseBtn = this.add.rectangle(width - 55, 34, 86, 44, 0x18100a, 0.92);
-    pauseBtn.setStrokeStyle(1.5, 0xd49b3d, 0.85);
-    pauseBtn.setInteractive({ useHandCursor: true });
-
-    const pauseIcon = this.add.text(width - 80, 34, '⏸', {
-      fontSize: '15px'
-    }).setOrigin(0.5);
-
-    const pauseLabel = this.add.text(width - 66, 34, 'PAUSE', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '11px',
-      color: '#ffc168',
-      fontStyle: 'bold'
-    }).setOrigin(0, 0.5);
-
+  private createPauseButton(_width: number) {
     const triggerPause = () => {
       // Don't open pause if another modal is active
       const modalKeys = [
@@ -717,18 +703,6 @@ export class UIScene extends Phaser.Scene {
       }
     };
 
-    pauseBtn.on('pointerdown', triggerPause);
-    pauseBtn.on('pointerover', () => {
-      pauseBtn.setFillStyle(0x352011);
-      pauseBtn.setStrokeStyle(2, 0xffd07b);
-      pauseLabel.setColor('#ffffff');
-    });
-    pauseBtn.on('pointerout', () => {
-      pauseBtn.setFillStyle(0x18100a);
-      pauseBtn.setStrokeStyle(1.5, 0xd49b3d, 0.85);
-      pauseLabel.setColor('#ffc168');
-    });
-
     if (this.input.keyboard) {
       this.input.keyboard.on('keydown-ESC', triggerPause);
       this.input.keyboard.on('keydown-P', triggerPause);
@@ -747,13 +721,16 @@ export class UIScene extends Phaser.Scene {
       }
     }
 
-    // Keep Objective HUD cleanly centered
+    // Keep Objective HUD cleanly centered and dynamically sized
     if (this.objectiveContainer) {
-      this.objectiveContainer.setPosition(this.cameras.main.width / 2 + 15, 34);
+      this.objectiveContainer.setPosition(this.cameras.main.width / 2, 34);
     }
 
-    if (this.objectiveText) {
+    if (this.objectiveText && this.objectiveBg) {
       this.objectiveText.setText(GameState.objective);
+      const textWidth = this.objectiveText.width;
+      const calculatedWidth = Math.max(360, Math.min(540, textWidth + 160));
+      this.objectiveBg.setSize(calculatedWidth, 42);
     }
     this.renderInventoryItems();
   }

@@ -357,13 +357,13 @@ class GameStateManager {
       }
     } else if (this._currentLevel === 4) {
       if (this._level4State.gameComplete) {
-        this._objective = "The Journey to Bappa is Complete.";
+        this._objective = "Journey to Bappa Complete.";
       } else if (this._level4State.finalDoorOpened) {
-        this._objective = "The sanctuary is open! Step into Bappa's divine light.";
+        this._objective = "Step into Bappa's divine light.";
       } else if (this._level4State.artefactPlaced) {
-        this._objective = "Solve the sacred image sequence (Remember what you have seen).";
+        this._objective = "Solve the sacred image sequence.";
       } else {
-        this._objective = "Approach the central pedestal and place the Complete Sacred Artefact.";
+        this._objective = "Place the Sacred Artefact on the pedestal.";
       }
     }
   }

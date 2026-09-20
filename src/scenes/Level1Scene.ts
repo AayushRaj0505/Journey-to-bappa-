@@ -48,9 +48,15 @@ export class Level1Scene extends Phaser.Scene {
     // Collide player with all walls and furniture obstacles
     this.physics.add.collider(this.player, this.obstacles);
 
-    // 5. Visual Indicator for Opened Panel & Bappa Sacred Altar Shrine
+    // 5. Visual Indicator for Opened Panel Box
     this.createPanelIndicator();
-    this.createBappaShrineVisuals();
+
+    // Auto grant Level 1 Astha & unlock Hint 1
+    if (!GameState.isPuzzleSolved('bappaPrayed')) {
+      GameState.setPuzzleState('bappaPrayed', true);
+      GameState.addAstha(20);
+      GameState.unlockHint(1);
+    }
 
     // 6. Interaction Manager
     this.interactionManager = new InteractionManager(this);
@@ -185,24 +191,6 @@ export class Level1Scene extends Phaser.Scene {
 
     this.openedPanelIndicator.add([glow, badge, check]);
     this.updateVisualState();
-  }
-
-  private createBappaShrineVisuals() {
-    const shrineX = 395;
-    const shrineY = 180;
-
-    // Soft divine golden aura over Lord Ganesha wall poster
-    const bappaAura = this.add.circle(shrineX, shrineY, 48, 0xffd07b, 0.22);
-    bappaAura.setDepth(2);
-    this.tweens.add({
-      targets: bappaAura,
-      scale: 1.25,
-      alpha: 0.38,
-      duration: 1600,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
   }
 
   private setupInteractables() {
@@ -421,52 +409,6 @@ export class Level1Scene extends Phaser.Scene {
       }
     }));
 
-    // 12. Bappa Sacred Image (Pray to Bappa -> +20 Astha -> Unlocks 1st Password Hint: Elephant)
-    this.interactionManager.register(new Interactable({
-      id: 'bappa_shrine',
-      x: 395,
-      y: 250,
-      radius: 110,
-      promptText: '[E] Pray before Lord Ganesha\'s Poster',
-      onInteract: () => {
-        if (!GameState.isPuzzleSolved('bappaPrayed')) {
-          GameState.setPuzzleState('bappaPrayed', true);
-          this.soundManager.playAsthaIncrease();
-          GameState.addAstha(20);
-          GameState.unlockHint(1);
-          this.events.emit('astha-gained');
-          this.events.emit('show-toast', '✨ Full Astha reached (20/20)! Bappa bestows the 1st Divine Key: ELEPHANT!', 3500);
-
-          // Launch Divine Hint Modal
-          this.player.freeze();
-          this.scene.pause();
-          this.scene.launch('DivineHintModal', {
-            newHintIndex: 1,
-            returnScene: 'Level1Scene'
-          });
-        } else {
-          this.soundManager.playButtonClick();
-          this.player.freeze();
-          this.scene.pause();
-          this.scene.launch('DivineHintModal', {
-            returnScene: 'Level1Scene'
-          });
-        }
-      }
-    }));
-
-    // 13. Bottom Ganesha Rug
-    this.interactionManager.register(new Interactable({
-      id: 'bottom_rug',
-      x: 705,
-      y: 835,
-      radius: 85,
-      promptText: '[E] Sacred Rug',
-      onInteract: () => {
-        this.soundManager.playButtonClick();
-        this.events.emit('show-toast', 'A rich red rug woven with the emblem of Lord Ganesha. Standing here fills you with courage.');
-      }
-    }));
   }
 
   private updateVisualState() {
