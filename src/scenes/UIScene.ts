@@ -7,6 +7,8 @@ import { SoundManager } from '../systems/SoundManager';
 export class UIScene extends Phaser.Scene {
   private objectiveContainer!: Phaser.GameObjects.Container;
   private objectiveBg!: Phaser.GameObjects.Rectangle;
+  private objectiveIcon!: Phaser.GameObjects.Text;
+  private objectivePrefix!: Phaser.GameObjects.Text;
   private objectiveText!: Phaser.GameObjects.Text;
   private asthaContainer!: Phaser.GameObjects.Container;
   private asthaText!: Phaser.GameObjects.Text;
@@ -212,27 +214,27 @@ export class UIScene extends Phaser.Scene {
     this.objectiveContainer = this.add.container(width / 2, 34);
 
     // Backdrop with golden border
-    this.objectiveBg = this.add.rectangle(0, 0, 440, 42, 0x18100a, 0.92);
+    this.objectiveBg = this.add.rectangle(0, 0, 360, 42, 0x18100a, 0.92);
     this.objectiveBg.setStrokeStyle(1.5, 0xd49b3d, 0.75);
 
-    const icon = this.add.text(-200, 0, '⭐', {
+    this.objectiveIcon = this.add.text(0, 0, '⭐', {
       fontSize: '16px'
     }).setOrigin(0.5);
 
-    const titlePrefix = this.add.text(-180, 0, 'GOAL:', {
+    this.objectivePrefix = this.add.text(0, 0, 'GOAL:', {
       fontFamily: 'Cinzel, serif',
       fontSize: '12px',
       color: '#ffc168',
       fontStyle: 'bold'
     }).setOrigin(0, 0.5);
 
-    this.objectiveText = this.add.text(-130, 0, GameState.objective, {
+    this.objectiveText = this.add.text(0, 0, GameState.objective, {
       fontFamily: 'Outfit, sans-serif',
       fontSize: '13px',
       color: '#ffffff'
     }).setOrigin(0, 0.5);
 
-    this.objectiveContainer.add([this.objectiveBg, icon, titlePrefix, this.objectiveText]);
+    this.objectiveContainer.add([this.objectiveBg, this.objectiveIcon, this.objectivePrefix, this.objectiveText]);
   }
 
   private createInventoryHUD(width: number, height: number) {
@@ -721,16 +723,21 @@ export class UIScene extends Phaser.Scene {
       }
     }
 
-    // Keep Objective HUD cleanly centered and dynamically sized
+    // Keep Objective HUD cleanly centered and dynamically aligned inside the backdrop
     if (this.objectiveContainer) {
       this.objectiveContainer.setPosition(this.cameras.main.width / 2, 34);
     }
 
-    if (this.objectiveText && this.objectiveBg) {
+    if (this.objectiveText && this.objectiveBg && this.objectiveIcon && this.objectivePrefix) {
       this.objectiveText.setText(GameState.objective);
       const textWidth = this.objectiveText.width;
-      const calculatedWidth = Math.max(360, Math.min(540, textWidth + 160));
-      this.objectiveBg.setSize(calculatedWidth, 42);
+      const boxWidth = Math.max(300, Math.min(580, textWidth + 115));
+      this.objectiveBg.setSize(boxWidth, 42);
+
+      const leftX = -boxWidth / 2;
+      this.objectiveIcon.setPosition(leftX + 22, 0);
+      this.objectivePrefix.setPosition(leftX + 38, 0);
+      this.objectiveText.setPosition(leftX + 90, 0);
     }
     this.renderInventoryItems();
   }

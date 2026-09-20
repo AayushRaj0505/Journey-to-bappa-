@@ -563,34 +563,107 @@ export class MainMenuScene extends Phaser.Scene {
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.85);
     overlay.setInteractive();
 
-    const box = this.add.rectangle(0, 0, 640, 460, 0x160c06, 0.98);
+    const box = this.add.rectangle(0, 0, 720, 520, 0x160c06, 0.98);
     box.setStrokeStyle(2.5, 0xd49b3d, 0.95);
 
-    const title = this.add.text(0, -180, 'CREDITS & DEDICATION', {
+    const title = this.add.text(0, -222, 'CREDITS & ACKNOWLEDGMENTS', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '24px',
+      fontSize: '22px',
       color: '#ffd07b',
+      fontStyle: 'bold',
+      letterSpacing: 1.5
+    }).setOrigin(0.5);
+
+    const closeBtn = this.createCloseButton(320, -222, () => this.closeActiveModal());
+
+    // --- SECTION 1: TEAM MEMBERS ---
+    const teamHeader = this.add.text(0, -175, '🌟  CORE DEVELOPMENT TEAM  🌟', {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '14px',
+      color: '#ffc168',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const closeBtn = this.createCloseButton(280, -180, () => this.closeActiveModal());
+    const teamList = [
+      { name: 'Aayush Raj', role: 'Game Director' },
+      { name: 'Piyush Kumar', role: 'Technical Support & Development' },
+      { name: 'Anushka Yadav', role: 'Narrative Director' },
+      { name: 'Kavya Raj', role: 'Narrative & Visual Design Assistant' }
+    ];
 
-    const creditsContent = this.add.text(0, 0,
-      'THE JOURNEY TO BAPPA\n\n' +
-      'Inspired by eternal devotion to Lord Ganesha (Vighnaharta)\n\n' +
-      'Engine & Systems: Phaser 3 + TypeScript\n' +
-      'Audio & Synthesis: Web Audio API Synthesizer\n' +
-      'Original Artwork & Level Design: Journey to Bappa Team\n\n' +
-      'Special thanks to everyone playing and sharing this experience.\n' +
-      'May Bappa remove all obstacles from your journey in life!', {
-      fontFamily: 'Outfit, sans-serif',
+    const teamContainer = this.add.container(0, -115);
+    const teamColWidth = 320;
+
+    teamList.forEach((m, idx) => {
+      const rowX = idx % 2 === 0 ? -160 : 160;
+      const rowY = Math.floor(idx / 2) * 44;
+
+      const card = this.add.rectangle(rowX, rowY, teamColWidth - 10, 38, 0x24140b, 0.9);
+      card.setStrokeStyle(1, 0x8b6508, 0.6);
+
+      const nameTxt = this.add.text(rowX - (teamColWidth - 30) / 2, rowY - 7, m.name, {
+        fontFamily: 'Cinzel, serif',
+        fontSize: '13px',
+        color: '#ffd07b',
+        fontStyle: 'bold'
+      }).setOrigin(0, 0.5);
+
+      const roleTxt = this.add.text(rowX - (teamColWidth - 30) / 2, rowY + 9, m.role, {
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '11px',
+        color: '#d4b182'
+      }).setOrigin(0, 0.5);
+
+      teamContainer.add([card, nameTxt, roleTxt]);
+    });
+
+    // --- SECTION 2: TOOLS & ATTRIBUTIONS ---
+    const toolsHeader = this.add.text(0, -10, '🛠️  TOOLS & ASSET ATTRIBUTIONS  🛠️', {
+      fontFamily: 'Cinzel, serif',
       fontSize: '14px',
-      color: '#e8d1b4',
-      align: 'center',
-      lineSpacing: 7
+      color: '#ffc168',
+      fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    modal.add([overlay, box, title, closeBtn, creditsContent]);
+    const toolsList = [
+      { tool: 'Google Antigravity', usage: 'AI Agentic Pair Programming & Engine Architecture' },
+      { tool: 'ChatGPT', usage: 'Story Scripting & Puzzle Logic Assistance' },
+      { tool: 'Pixabay', usage: 'Sound Effects & Atmospheric Audio Ambience' },
+      { tool: 'Google Search', usage: 'Sacred Lore & Cultural Reference' },
+      { tool: 'Git & GitHub', usage: 'Version Control & Development Lifecycle' }
+    ];
+
+    const toolsContainer = this.add.container(0, 105);
+    toolsList.forEach((t, idx) => {
+      const rowY = idx * 28 - 60;
+      const tCard = this.add.rectangle(0, rowY, 660, 24, 0x1d1008, 0.7);
+      tCard.setStrokeStyle(1, 0x4a2e16, 0.4);
+
+      const toolName = this.add.text(-315, rowY, `• ${t.tool}`, {
+        fontFamily: 'Cinzel, serif',
+        fontSize: '11.5px',
+        color: '#ffd07b',
+        fontStyle: 'bold'
+      }).setOrigin(0, 0.5);
+
+      const toolUsage = this.add.text(20, rowY, t.usage, {
+        fontFamily: 'Outfit, sans-serif',
+        fontSize: '11.5px',
+        color: '#cbb393'
+      }).setOrigin(0, 0.5);
+
+      toolsContainer.add([tCard, toolName, toolUsage]);
+    });
+
+    // Footer Devotional Note
+    const footerTxt = this.add.text(0, 215, 'Crafted with devotion • Ganpati Bappa Morya!', {
+      fontFamily: 'Outfit, sans-serif',
+      fontSize: '13px',
+      color: '#ffc168',
+      fontStyle: 'italic'
+    }).setOrigin(0.5);
+
+    modal.add([overlay, box, title, closeBtn, teamHeader, teamContainer, toolsHeader, toolsContainer, footerTxt]);
     this.animateModalIn(modal);
   }
 
