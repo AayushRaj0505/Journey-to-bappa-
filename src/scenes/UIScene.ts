@@ -556,20 +556,17 @@ export class UIScene extends Phaser.Scene {
     this.interactButtonContainer = this.add.container(btnX, btnY);
     this.interactButtonContainer.setDepth(100);
 
-    const btnTouchZone = this.add.circle(0, 0, 52, 0x000000, 0.01);
-    btnTouchZone.setInteractive({ useHandCursor: true });
-
-    const btnBack = this.add.circle(0, 0, 42, 0x1d1108, 0.92);
+    const btnBack = this.add.circle(0, 0, 48, 0x1d1108, 0.92);
     btnBack.setStrokeStyle(2.5, 0xd49b3d, 0.85);
 
-    const btnPulseRing = this.add.circle(0, 0, 48, 0xffd07b, 0.0);
+    const btnPulseRing = this.add.circle(0, 0, 54, 0xffd07b, 0.0);
     btnPulseRing.setStrokeStyle(1.5, 0xffd07b, 0.4);
 
     const btnIcon = this.add.text(0, -6, '✋', {
-      fontSize: '22px'
+      fontSize: '24px'
     }).setOrigin(0.5);
 
-    const btnLabel = this.add.text(0, 15, 'INTERACT', {
+    const btnLabel = this.add.text(0, 16, 'INTERACT', {
       fontFamily: 'Cinzel, serif',
       fontSize: '10px',
       color: '#ffd07b',
@@ -577,7 +574,15 @@ export class UIScene extends Phaser.Scene {
       letterSpacing: 1
     }).setOrigin(0.5);
 
-    this.interactButtonContainer.add([btnTouchZone, btnBack, btnPulseRing, btnIcon, btnLabel]);
+    const btnTouchZone = this.add.circle(0, 0, 56, 0x000000, 0.001);
+
+    this.interactButtonContainer.add([btnBack, btnPulseRing, btnIcon, btnLabel, btnTouchZone]);
+
+    // Make all parts interactive so any touch on the button circle triggers interaction cleanly
+    btnTouchZone.setInteractive({ useHandCursor: true });
+    btnBack.setInteractive({ useHandCursor: true });
+    btnIcon.setInteractive({ useHandCursor: true });
+    btnLabel.setInteractive({ useHandCursor: true });
 
     // Pulsate button softly when an interactable is in proximity
     this.tweens.add({
@@ -590,15 +595,18 @@ export class UIScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    const triggerAction = () => {
-      this.sound.play('ui_click', { volume: 0.6 });
+    const triggerAction = (pointer?: Phaser.Input.Pointer) => {
+      if (pointer && pointer.event) {
+        pointer.event.stopPropagation();
+      }
+      SoundManager.getInstance().playButtonClick();
       
       // Visual press animation
       this.tweens.add({
         targets: this.interactButtonContainer,
-        scaleX: 0.9,
-        scaleY: 0.9,
-        duration: 80,
+        scaleX: 0.88,
+        scaleY: 0.88,
+        duration: 70,
         yoyo: true,
         ease: 'Quad.easeInOut'
       });
@@ -623,14 +631,21 @@ export class UIScene extends Phaser.Scene {
     };
 
     btnTouchZone.on('pointerdown', triggerAction);
-    btnTouchZone.on('pointerover', () => {
+    btnBack.on('pointerdown', triggerAction);
+    btnIcon.on('pointerdown', triggerAction);
+    btnLabel.on('pointerdown', triggerAction);
+
+    const handleHover = () => {
       btnBack.setFillStyle(0x351e0e, 0.98);
       btnBack.setStrokeStyle(3, 0xffe29a, 1);
-    });
-    btnTouchZone.on('pointerout', () => {
+    };
+    const handleOut = () => {
       btnBack.setFillStyle(0x1d1108, 0.92);
       btnBack.setStrokeStyle(2.5, 0xd49b3d, 0.85);
-    });
+    };
+
+    btnTouchZone.on('pointerover', handleHover);
+    btnTouchZone.on('pointerout', handleOut);
   }
 
   private setPlayerMoveInput(x: number, y: number) {
