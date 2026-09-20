@@ -90,8 +90,11 @@ export class Level4Scene extends Phaser.Scene {
       this.activateSanctumPortal(false);
     }
 
-    // Welcome toast notification
-    this.time.delayedCall(450, () => {
+    // Start level 4 background music
+    this.soundManager.playLevelBGM(this, 'level4_bgm');
+
+    // Welcome toast
+    this.time.delayedCall(400, () => {
       this.events.emit('show-toast', 'Welcome to the Sacred Temple. Peace and blessings fill the air.', 4000);
     });
 
@@ -143,17 +146,17 @@ export class Level4Scene extends Phaser.Scene {
     addBox(500, 940, 25, 259);
     addBox(787, 940, 25, 259);
 
-    // Central pedestal base collider (expanded so player cannot walk over artefact slot)
-    addBox(606, 490, 100, 60);
+    // Central pedestal solid collider (covers the pedestal pillar structure at y=680)
+    addBox(580, 635, 152, 90);
 
-    // Lord Ganesha idol solid base collider (prevents walking/climbing on idol)
-    addBox(606, 195, 100, 50);
+    // Lord Ganesha idol solid base collider
+    addBox(546, 175, 220, 105);
   }
 
   private createInteractables() {
-    // 1. CENTRAL PEDESTAL (Sacred Artefact Slot & Image Mechanism)
+    // 1. CENTRAL PEDESTAL (Sacred Artefact Slot & Image Mechanism on Pedestal Pillar)
     const px = 656;
-    const py = 518;
+    const py = 680;
 
     // If artefact was already placed previously
     if (GameState.level4State.artefactPlaced) {
@@ -163,8 +166,8 @@ export class Level4Scene extends Phaser.Scene {
     this.pedestalInteractable = new Interactable({
       id: 'central_pedestal',
       x: px,
-      y: py + 20,
-      radius: 85,
+      y: py + 45,
+      radius: 95,
       promptText: GameState.level4State.artefactPlaced 
         ? '[E] Sacred Image Mechanism' 
         : '[E] Central Pedestal: Sacred Artefact Slot',
@@ -177,7 +180,7 @@ export class Level4Scene extends Phaser.Scene {
       id: 'ganesha_shrine',
       x: 656,
       y: 250,
-      radius: 85,
+      radius: 125,
       promptText: '[E] Pray before Lord Ganesha\'s Idol',
       onInteract: () => this.handleIdolPrayer()
     }));
@@ -235,11 +238,11 @@ export class Level4Scene extends Phaser.Scene {
       }
     }));
 
-    // 6. INSCRIBED STONE PLAQUE (Subtle hint for the image sequence)
+    // 6. INSCRIBED STONE PLAQUE (Below the pedestal floor ring)
     this.interactionManager.register(new Interactable({
       id: 'inscribed_plaque',
       x: 656,
-      y: 690,
+      y: 790,
       radius: 70,
       promptText: '[E] Read Inscribed Floor Plaque',
       onInteract: () => {
@@ -381,7 +384,7 @@ export class Level4Scene extends Phaser.Scene {
     this.soundManager.playDoorOpen();
 
     const px = 656;
-    const py = 518;
+    const py = 680;
 
     // 1. Render glowing artefact sprite starting elevated above pedestal
     this.placedArtefactSprite = this.add.image(px, py - 35, 'item_artifact_complete');
@@ -573,6 +576,7 @@ export class Level4Scene extends Phaser.Scene {
   private triggerGameComplete() {
     this.isTransitioningToEnd = true;
     this.player.freeze();
+    this.soundManager.stopBGM();
     this.soundManager.playLevelComplete();
     GameState.setLevel4Field('gameComplete', true);
 
@@ -592,7 +596,20 @@ export class Level4Scene extends Phaser.Scene {
       onComplete: () => {
         this.scene.stop('Level4Scene');
         this.scene.stop('UIScene');
-        this.scene.start('GameCompleteScene');
+        this.scene.start('CutsceneScene', {
+          transitionId: 4,
+          images: ['final_1', 'final_2', 'final_3', 'final_4', 'final_screen'],
+          audios: [
+            'final_vo_1',
+            'final_vo_2',
+            'final_vo_3',
+            ['final_vo_4_1', 'final_vo_4_2', 'final_vo_4_3'],
+            'final_sound'
+          ],
+          targetLevel: 4,
+          targetSceneKey: 'GameCompleteScene',
+          title: 'EPILOGUE: THE DIVINE BLESSING'
+        });
       }
     });
   }

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameState } from '../state/GameState';
 import { ITEM_REGISTRY } from '../state/Types';
 import { Interactable } from '../components/Interactable';
+import { SoundManager } from '../systems/SoundManager';
 
 export class UIScene extends Phaser.Scene {
   private objectiveContainer!: Phaser.GameObjects.Container;
@@ -115,9 +116,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createAsthaHUD() {
-    this.asthaContainer = this.add.container(125, 34);
+    this.asthaContainer = this.add.container(105, 34);
 
-    const bg = this.add.rectangle(0, 0, 190, 44, 0x18100a, 0.92);
+    const bg = this.add.rectangle(0, 0, 165, 42, 0x18100a, 0.94);
     bg.setStrokeStyle(1.5, 0xd49b3d, 0.85);
     bg.setInteractive({ useHandCursor: true });
 
@@ -150,21 +151,21 @@ export class UIScene extends Phaser.Scene {
       bg.setStrokeStyle(1.5, 0xd49b3d, 0.85);
     });
 
-    const icon = this.add.text(-75, 0, '🪔', {
-      fontSize: '20px'
+    const icon = this.add.text(-62, 0, '🪔', {
+      fontSize: '18px'
     }).setOrigin(0.5);
 
-    const label = this.add.text(-50, -8, 'ASTHA', {
+    const label = this.add.text(-44, -8, 'ASTHA', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '11px',
+      fontSize: '10px',
       color: '#ffc168',
       fontStyle: 'bold',
       letterSpacing: 2
     }).setOrigin(0, 0.5);
 
-    this.asthaText = this.add.text(-50, 10, `${GameState.astha} / ${GameState.maxAstha}`, {
+    this.asthaText = this.add.text(-44, 9, `${GameState.astha} / ${GameState.maxAstha}`, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '14px',
+      fontSize: '13px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0, 0.5);
@@ -178,9 +179,9 @@ export class UIScene extends Phaser.Scene {
   private renderAsthaBar() {
     this.asthaBarGraphics.clear();
     const ratio = Math.min(1, Math.max(0, GameState.astha / GameState.maxAstha));
-    const barX = 25;
+    const barX = 22;
     const barY = -4;
-    const barW = 55;
+    const barW = 50;
     const barH = 8;
 
     // Track
@@ -207,26 +208,26 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createObjectiveHUD(width: number) {
-    this.objectiveContainer = this.add.container(width / 2, 34);
+    this.objectiveContainer = this.add.container(width / 2 + 15, 34);
 
-    // Backdrop (sized to 520 for clean side-by-side with Astha & Compass)
-    const bg = this.add.rectangle(0, 0, 520, 44, 0x18100a, 0.88);
-    bg.setStrokeStyle(1.5, 0xd49b3d, 0.7);
+    // Backdrop (sized to 430 for clean side-by-side with Astha & Pause button)
+    const bg = this.add.rectangle(0, 0, 430, 42, 0x18100a, 0.92);
+    bg.setStrokeStyle(1.5, 0xd49b3d, 0.75);
 
-    const icon = this.add.text(-235, 0, '⭐', {
-      fontSize: '17px'
+    const icon = this.add.text(-195, 0, '⭐', {
+      fontSize: '16px'
     }).setOrigin(0.5);
 
-    const titlePrefix = this.add.text(-210, 0, 'GOAL:', {
+    const titlePrefix = this.add.text(-174, 0, 'GOAL:', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '13px',
+      fontSize: '12px',
       color: '#ffc168',
       fontStyle: 'bold'
     }).setOrigin(0, 0.5);
 
-    this.objectiveText = this.add.text(-155, 0, GameState.objective, {
+    this.objectiveText = this.add.text(-122, 0, GameState.objective, {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '14px',
+      fontSize: '13px',
       color: '#ffffff'
     }).setOrigin(0, 0.5);
 
@@ -236,16 +237,21 @@ export class UIScene extends Phaser.Scene {
   private createInventoryHUD(width: number, height: number) {
     this.inventorySlotsContainer = this.add.container(width / 2, height - 38);
 
-    const bgWidth = 340;
-    const bg = this.add.rectangle(0, 0, bgWidth, 46, 0x140d07, 0.92);
-    bg.setStrokeStyle(1.5, 0xd49b3d, 0.65);
+    const bgWidth = 380;
+    const bg = this.add.rectangle(0, 0, bgWidth, 48, 0x140d07, 0.94);
+    bg.setStrokeStyle(1.5, 0xd49b3d, 0.75);
     this.inventorySlotsContainer.add(bg);
 
-    const invTitle = this.add.text(-bgWidth / 2 + 14, 0, 'ITEMS', {
+    const innerFrame = this.add.rectangle(0, 0, bgWidth - 6, 42, 0x1e120a, 0.7);
+    innerFrame.setStrokeStyle(1, 0x8b6508, 0.4);
+    this.inventorySlotsContainer.add(innerFrame);
+
+    const invTitle = this.add.text(-bgWidth / 2 + 16, 0, '🎒 ITEMS', {
       fontFamily: 'Cinzel, serif',
       fontSize: '11px',
-      color: '#e2a348',
-      fontStyle: 'bold'
+      color: '#ffd07b',
+      fontStyle: 'bold',
+      letterSpacing: 1
     }).setOrigin(0, 0.5);
     this.inventorySlotsContainer.add(invTitle);
 
@@ -253,40 +259,66 @@ export class UIScene extends Phaser.Scene {
   }
 
   private renderInventoryItems() {
-    // Clear previous item slots except background & title
-    const childrenToKeep = this.inventorySlotsContainer.list.slice(0, 2);
+    // Clear previous item slots except background & title elements (first 3 children)
+    const childrenToKeep = this.inventorySlotsContainer.list.slice(0, 3);
     this.inventorySlotsContainer.removeAll();
     childrenToKeep.forEach(c => this.inventorySlotsContainer.add(c));
 
     const maxSlots = 5;
-    const startX = -65;
-    const slotGap = 48;
+    const startX = -55;
+    const slotGap = 50;
     const items = GameState.inventory;
 
     for (let i = 0; i < maxSlots; i++) {
       const sx = startX + i * slotGap;
-      const slotBox = this.add.rectangle(sx, 0, 36, 36, 0x24160d, 0.9);
-      slotBox.setStrokeStyle(1, 0x8b6508, 0.5);
+      const isOccupied = i < items.length;
+
+      const slotBox = this.add.rectangle(sx, 0, 40, 40, isOccupied ? 0x2e190e : 0x1c1109, 0.95);
+      slotBox.setStrokeStyle(isOccupied ? 1.5 : 1, isOccupied ? 0xffd07b : 0x734d28, isOccupied ? 0.9 : 0.4);
       this.inventorySlotsContainer.add(slotBox);
 
-      if (i < items.length) {
+      if (isOccupied) {
         const itemKey = items[i];
         const info = ITEM_REGISTRY[itemKey];
 
-        const itemIcon = this.add.text(sx, 0, info.icon, {
-          fontSize: '22px'
-        }).setOrigin(0.5);
+        // Subtle warm glow behind the item
+        const itemGlow = this.add.circle(sx, 0, 15, 0xffd07b, 0.15);
+        this.inventorySlotsContainer.add(itemGlow);
+
+        // High-resolution item sprite or fallback icon
+        if (info.assetKey && this.textures.exists(info.assetKey)) {
+          const itemSprite = this.add.image(sx, 0, info.assetKey);
+          itemSprite.setDisplaySize(30, 30);
+          this.inventorySlotsContainer.add(itemSprite);
+        } else {
+          const itemIcon = this.add.text(sx, 0, info.icon, {
+            fontSize: '20px'
+          }).setOrigin(0.5);
+          this.inventorySlotsContainer.add(itemIcon);
+        }
+
+        // Slot number in corner
+        const slotNum = this.add.text(sx - 15, -14, `${i + 1}`, {
+          fontFamily: 'Outfit, sans-serif',
+          fontSize: '9px',
+          color: '#ffd07b',
+          fontStyle: 'bold'
+        }).setOrigin(0, 0);
+        this.inventorySlotsContainer.add(slotNum);
 
         // Tooltip on pointer over & inspect on click
         slotBox.setInteractive({ useHandCursor: true });
         slotBox.on('pointerover', () => {
-          slotBox.setStrokeStyle(2, 0xffd07b);
-          this.showToast(`${info.name}: ${info.description}`, 3000);
+          slotBox.setStrokeStyle(2, 0xffe29a, 1);
+          slotBox.setScale(1.06);
+          this.showToast(`✨ ${info.name}: ${info.description}`, 3500);
         });
         slotBox.on('pointerout', () => {
-          slotBox.setStrokeStyle(1, 0x8b6508, 0.5);
+          slotBox.setStrokeStyle(1.5, 0xffd07b, 0.9);
+          slotBox.setScale(1);
         });
         slotBox.on('pointerdown', () => {
+          SoundManager.getInstance().playButtonClick();
           if (this.scene.isActive('Level3Scene')) {
             if (itemKey === 'Completed_Artefact') {
               this.scene.pause('Level3Scene');
@@ -309,12 +341,10 @@ export class UIScene extends Phaser.Scene {
             }
           }
         });
-
-        this.inventorySlotsContainer.add(itemIcon);
       } else {
-        const emptyDot = this.add.text(sx, 0, '·', {
-          fontSize: '18px',
-          color: '#553c2a'
+        const emptyDot = this.add.text(sx, 0, '◇', {
+          fontSize: '13px',
+          color: '#553723'
         }).setOrigin(0.5);
         this.inventorySlotsContainer.add(emptyDot);
       }
@@ -526,9 +556,11 @@ export class UIScene extends Phaser.Scene {
     this.interactButtonContainer = this.add.container(btnX, btnY);
     this.interactButtonContainer.setDepth(100);
 
+    const btnTouchZone = this.add.circle(0, 0, 52, 0x000000, 0.01);
+    btnTouchZone.setInteractive({ useHandCursor: true });
+
     const btnBack = this.add.circle(0, 0, 42, 0x1d1108, 0.92);
     btnBack.setStrokeStyle(2.5, 0xd49b3d, 0.85);
-    btnBack.setInteractive({ useHandCursor: true });
 
     const btnPulseRing = this.add.circle(0, 0, 48, 0xffd07b, 0.0);
     btnPulseRing.setStrokeStyle(1.5, 0xffd07b, 0.4);
@@ -545,7 +577,7 @@ export class UIScene extends Phaser.Scene {
       letterSpacing: 1
     }).setOrigin(0.5);
 
-    this.interactButtonContainer.add([btnBack, btnPulseRing, btnIcon, btnLabel]);
+    this.interactButtonContainer.add([btnTouchZone, btnBack, btnPulseRing, btnIcon, btnLabel]);
 
     // Pulsate button softly when an interactable is in proximity
     this.tweens.add({
@@ -590,12 +622,12 @@ export class UIScene extends Phaser.Scene {
       }
     };
 
-    btnBack.on('pointerdown', triggerAction);
-    btnBack.on('pointerover', () => {
+    btnTouchZone.on('pointerdown', triggerAction);
+    btnTouchZone.on('pointerover', () => {
       btnBack.setFillStyle(0x351e0e, 0.98);
       btnBack.setStrokeStyle(3, 0xffe29a, 1);
     });
-    btnBack.on('pointerout', () => {
+    btnTouchZone.on('pointerout', () => {
       btnBack.setFillStyle(0x1d1108, 0.92);
       btnBack.setStrokeStyle(2.5, 0xd49b3d, 0.85);
     });
@@ -689,9 +721,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   private updateHUD() {
-    const showAstha = true;
+    const showAstha = this.scene.isActive('Level2Scene');
 
-    // Toggle Astha HUD visibility
+    // Toggle Astha HUD visibility (only visible during Level 2 Diya Maze)
     if (this.asthaContainer) {
       this.asthaContainer.setVisible(showAstha);
       if (showAstha) {
@@ -702,7 +734,7 @@ export class UIScene extends Phaser.Scene {
 
     // Keep Objective HUD cleanly centered
     if (this.objectiveContainer) {
-      this.objectiveContainer.setPosition(this.cameras.main.width / 2, 34);
+      this.objectiveContainer.setPosition(this.cameras.main.width / 2 + 15, 34);
     }
 
     if (this.objectiveText) {

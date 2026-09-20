@@ -107,9 +107,14 @@ export class Level3CompleteScene extends Phaser.Scene {
     const handleNext = () => {
       sound.playButtonClick();
       this.scene.stop('Level3CompleteScene');
-      GameState.startLevel4();
-      this.scene.start('Level4Scene');
-      this.scene.launch('UIScene');
+      this.scene.start('CutsceneScene', {
+        transitionId: 3,
+        images: ['trans3_1', 'trans3_2', 'trans3_3'],
+        targetLevel: 4,
+        targetSceneKey: 'Level4Scene',
+        targetStateInit: () => GameState.startLevel4(),
+        title: 'CHAPTER 3: THE SACRED THRESHOLD'
+      });
     };
 
     nextBtn.on('pointerdown', handleNext);

@@ -106,9 +106,14 @@ export class LevelCompleteScene extends Phaser.Scene {
     const handleProceed = () => {
       sound.playButtonClick();
       this.scene.stop('LevelCompleteScene');
-      GameState.startLevel2();
-      this.scene.start('Level2Scene');
-      this.scene.launch('UIScene');
+      this.scene.start('CutsceneScene', {
+        transitionId: 1,
+        images: ['trans1_1', 'trans1_2', 'trans1_3'],
+        targetLevel: 2,
+        targetSceneKey: 'Level2Scene',
+        targetStateInit: () => GameState.startLevel2(),
+        title: 'CHAPTER 1: INTO THE DARKNESS'
+      });
     };
 
     proceedBtn.on('pointerdown', handleProceed);

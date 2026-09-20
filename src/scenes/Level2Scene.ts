@@ -68,7 +68,7 @@ export class Level2Scene extends Phaser.Scene {
 
   create() {
     this.soundManager = SoundManager.getInstance();
-    this.soundManager.startDarkAmbientBGM();
+    this.soundManager.playLevelBGM(this, 'level2_bgm');
 
     // Reset all instance state on every start/retry
     this.isVighnaAttacking = false;

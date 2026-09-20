@@ -30,6 +30,7 @@ export class PauseModal extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const sound = SoundManager.getInstance();
     sound.playButtonClick();
+    sound.pauseBGM();
 
     // Pause parent gameplay scene
     if (this.scene.isActive(this.parentSceneKey)) {
@@ -285,6 +286,7 @@ export class PauseModal extends Phaser.Scene {
 
   private resumeGame() {
     SoundManager.getInstance().playButtonClick();
+    SoundManager.getInstance().resumeBGM();
     if (this.scene.isPaused(this.parentSceneKey)) {
       this.scene.resume(this.parentSceneKey);
     }
@@ -293,6 +295,7 @@ export class PauseModal extends Phaser.Scene {
 
   private restartCurrentLevel() {
     SoundManager.getInstance().playButtonClick();
+    SoundManager.getInstance().stopBGM();
     this.scene.stop('PauseModal');
 
     // Reset state according to current level
@@ -325,6 +328,7 @@ export class PauseModal extends Phaser.Scene {
 
   private returnToMainMenu() {
     SoundManager.getInstance().playButtonClick();
+    SoundManager.getInstance().stopBGM();
     // Stop all gameplay and UI scenes
     this.scene.stop(this.parentSceneKey);
     this.scene.stop('UIScene');

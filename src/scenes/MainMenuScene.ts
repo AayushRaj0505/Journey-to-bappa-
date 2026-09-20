@@ -14,6 +14,7 @@ export class MainMenuScene extends Phaser.Scene {
   create() {
     const { width, height } = this.cameras.main;
     const sound = SoundManager.getInstance();
+    sound.playLevelBGM(this, 'mainmenu_bgm');
 
     // 1. Deep atmospheric background
     this.add.rectangle(width / 2, height / 2, width, height, 0x090503, 1);
@@ -88,9 +89,15 @@ export class MainMenuScene extends Phaser.Scene {
     // [PLAY GAME]
     this.createMenuButton(mainContainer, 0, btnStartY, '▶  START JOURNEY', 0x804515, 0xffe29a, () => {
       sound.playButtonClick();
+      sound.stopBGM();
       GameState.reset();
-      this.scene.start('Level1Scene');
-      this.scene.launch('UIScene');
+      this.scene.start('CutsceneScene', {
+        transitionId: 0,
+        images: ['intro_1', 'intro_2', 'intro_3', 'intro_4', 'intro_5', 'intro_6'],
+        targetLevel: 1,
+        targetSceneKey: 'Level1Scene',
+        title: 'PROLOGUE: THE BEGINNING'
+      });
     }, true);
 
     // [LEVEL SELECT]

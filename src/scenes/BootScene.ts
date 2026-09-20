@@ -61,6 +61,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('room_drawer', 'assets/room/drawer.png');
     this.load.image('room_cupboard', 'assets/room/cupboard.png');
     this.load.image('room_mat', 'assets/room/mat.png');
+    this.load.image('bappa_painting', 'assets/level3/Painting1.png');
 
     // 2. Interactive items & puzzles (user provided art)
     this.load.image('item_handle', 'assets/items/handle.png');
@@ -123,6 +124,53 @@ export class BootScene extends Phaser.Scene {
     this.load.image('icon_mushak', 'assets/level4/icons/icon_mushak.png');
     this.load.image('icon_bell', 'assets/level4/icons/icon_bell.png');
     this.load.image('icon_lotus', 'assets/level4/icons/icon_lotus.png');
+
+    // 6. Level & Main Menu Background Music Audio Assets
+    this.load.audio('mainmenu_bgm', 'assets/audio/mainmenu_bg.mp3');
+    this.load.audio('level1_bgm', 'assets/audio/level1_bg.mp3');
+    this.load.audio('level2_bgm', 'assets/audio/level2_bg.mp3');
+    this.load.audio('level3_bgm', 'assets/audio/level3_bg.mp3');
+    this.load.audio('level4_bgm', 'assets/audio/level4_bg.mp3');
+
+    // 7. Cutscene Level Transition Images
+    // Beginning Intro Cutscene
+    this.load.image('intro_1', 'assets/intro/intro_1.png');
+    this.load.image('intro_2', 'assets/intro/intro_2.png');
+    this.load.image('intro_3', 'assets/intro/intro_3.png');
+    this.load.image('intro_4', 'assets/intro/intro_4.png');
+    this.load.image('intro_5', 'assets/intro/intro_5.png');
+    this.load.image('intro_6', 'assets/intro/intro_6.png');
+
+    // Transition 1 (Level 1 -> 2)
+    this.load.image('trans1_1', 'assets/transitions/trans1_1.png');
+    this.load.image('trans1_2', 'assets/transitions/trans1_2.png');
+    this.load.image('trans1_3', 'assets/transitions/trans1_3.png');
+
+    // Transition 2 (Level 2 -> 3)
+    this.load.image('trans2_1', 'assets/transitions/trans2_1.png');
+    this.load.image('trans2_2', 'assets/transitions/trans2_2.png');
+    this.load.image('trans2_3', 'assets/transitions/trans2_3.png');
+    this.load.image('trans2_4', 'assets/transitions/trans2_4.png');
+
+    // Transition 3 (Level 3 -> 4)
+    this.load.image('trans3_1', 'assets/transitions/trans3_1.png');
+    this.load.image('trans3_2', 'assets/transitions/trans3_2.png');
+    this.load.image('trans3_3', 'assets/transitions/trans3_3.png');
+
+    // 8. Final Outro Cutscene Images & Audio Voiceovers
+    this.load.image('final_1', 'assets/final/final_1.png');
+    this.load.image('final_2', 'assets/final/final_2.png');
+    this.load.image('final_3', 'assets/final/final_3.png');
+    this.load.image('final_4', 'assets/final/final_4.png');
+    this.load.image('final_screen', 'assets/final/final_screen.png');
+
+    this.load.audio('final_vo_1', 'assets/final/final_audio_1.mp3');
+    this.load.audio('final_vo_2', 'assets/final/final_audio_2.mp3');
+    this.load.audio('final_vo_3', 'assets/final/final_audio_3.mp3');
+    this.load.audio('final_vo_4_1', 'assets/final/final_audio_4_1.mp3');
+    this.load.audio('final_vo_4_2', 'assets/final/final_audio_4_2.mp3');
+    this.load.audio('final_vo_4_3', 'assets/final/final_audio_4_3.mp3');
+    this.load.audio('final_sound', 'assets/final/final_sound.mp3');
   }
 
   create() {

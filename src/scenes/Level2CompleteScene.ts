@@ -108,9 +108,14 @@ export class Level2CompleteScene extends Phaser.Scene {
     const handleProceed = () => {
       sound.playButtonClick();
       this.scene.stop('Level2CompleteScene');
-      GameState.startLevel3();
-      this.scene.start('Level3Scene');
-      this.scene.launch('UIScene');
+      this.scene.start('CutsceneScene', {
+        transitionId: 2,
+        images: ['trans2_1', 'trans2_2', 'trans2_3', 'trans2_4'],
+        targetLevel: 3,
+        targetSceneKey: 'Level3Scene',
+        targetStateInit: () => GameState.startLevel3(),
+        title: 'CHAPTER 2: SECRETS OF THE SANCTUM'
+      });
     };
 
     proceedBtn.on('pointerdown', handleProceed);

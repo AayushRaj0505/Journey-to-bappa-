@@ -24,6 +24,7 @@ import { MorseChartModal } from './scenes/Modals/MorseChartModal';
 import { PauseModal } from './scenes/Modals/PauseModal';
 import { MainMenuScene } from './scenes/MainMenuScene';
 import { GameCompleteScene } from './scenes/GameCompleteScene';
+import { CutsceneScene } from './scenes/CutsceneScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -50,6 +51,7 @@ const config: Phaser.Types.Core.GameConfig = {
     Level3Scene,
     Level4Scene,
     UIScene,
+    CutsceneScene,
     PauseModal,
     NoteModal,
     KeypadModal,

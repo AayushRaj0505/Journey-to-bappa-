@@ -88,8 +88,8 @@ export class Level3Scene extends Phaser.Scene {
       this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     }
 
-    // Start warm background music / ambient
-    this.soundManager.startBGM();
+    // Start level 3 background music
+    this.soundManager.playLevelBGM(this, 'level3_bgm');
 
     // Welcome toast
     this.time.delayedCall(400, () => {

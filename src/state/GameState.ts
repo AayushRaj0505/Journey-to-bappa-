@@ -281,9 +281,9 @@ class GameStateManager {
     if (this._astha < 50) {
       this._astha = 50;
     }
-    // Ensure player carries the completed circular artefact
-    if (!this._inventory.has('Completed_Artefact')) {
-      this._inventory.add('Completed_Artefact');
+    // Combine artefacts if player found both fragments across Level 1 and Level 3
+    if (this._inventory.has('Artefact_Fragment') && this._inventory.has('Artefact_Fragment_2')) {
+      this.combineArtefacts();
     }
     this._level4State = {
       artefactPlaced: false,

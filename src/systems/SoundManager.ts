@@ -33,6 +33,9 @@ export class SoundManager {
 
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
+    if (this.currentBgmSound && 'setVolume' in this.currentBgmSound) {
+      (this.currentBgmSound as Phaser.Sound.WebAudioSound).setVolume(this.isMuted ? 0 : 0.4);
+    }
     if (this.isMuted && this.ctx && this.bgmGain) {
       this.bgmGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
     } else if (!this.isMuted && this.ctx && this.bgmGain && this.isBgmPlaying) {
@@ -43,6 +46,9 @@ export class SoundManager {
 
   public setMuted(muted: boolean): void {
     this.isMuted = muted;
+    if (this.currentBgmSound && 'setVolume' in this.currentBgmSound) {
+      (this.currentBgmSound as Phaser.Sound.WebAudioSound).setVolume(this.isMuted ? 0 : 0.4);
+    }
     if (this.isMuted && this.ctx && this.bgmGain) {
       this.bgmGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
     } else if (!this.isMuted && this.ctx && this.bgmGain && this.isBgmPlaying) {
@@ -285,6 +291,29 @@ export class SoundManager {
 
     osc.start(now);
     osc.stop(now + 0.7);
+  }
+
+  private currentBgmSound?: Phaser.Sound.BaseSound;
+  private currentBgmKey?: string;
+
+  public playLevelBGM(scene: Phaser.Scene, audioKey: string, volume: number = 0.4) {
+    if (this.currentBgmKey === audioKey && this.currentBgmSound && this.currentBgmSound.isPlaying) {
+      return;
+    }
+
+    this.stopBGM();
+
+    if (scene.cache.audio.exists(audioKey)) {
+      this.currentBgmSound = scene.sound.add(audioKey, {
+        loop: true,
+        volume: this.isMuted ? 0 : volume
+      });
+      this.currentBgmSound.play();
+      this.currentBgmKey = audioKey;
+      this.isBgmPlaying = true;
+    } else {
+      this.startBGM();
+    }
   }
 
   public startBGM() {
@@ -550,11 +579,36 @@ export class SoundManager {
     osc.stop(now + 0.07);
   }
 
+  public pauseBGM() {
+    if (this.currentBgmSound && this.currentBgmSound.isPlaying) {
+      this.currentBgmSound.pause();
+    }
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+    }
+  }
+
+  public resumeBGM() {
+    if (this.isMuted) return;
+    if (this.currentBgmSound && this.currentBgmSound.isPaused) {
+      this.currentBgmSound.resume();
+    }
+    if (this.bgmGain && this.ctx && this.isBgmPlaying) {
+      this.bgmGain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+    }
+  }
+
   public stopBGM() {
+    if (this.currentBgmSound) {
+      this.currentBgmSound.stop();
+      this.currentBgmSound.destroy();
+      this.currentBgmSound = undefined;
+      this.currentBgmKey = undefined;
+    }
     if (this.bgmGain && this.ctx) {
       this.bgmGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.5);
-      this.isBgmPlaying = false;
     }
+    this.isBgmPlaying = false;
   }
 }
 

@@ -73,9 +73,10 @@ export class GameCompleteScene extends Phaser.Scene {
 
     container.add([subtitle, title]);
 
-    // 4. Temporary Cinematic Placeholder Box
-    const cutsceneBox = this.add.rectangle(0, -100, 420, 140, 0x0f0804, 1);
+    // 4. Interactive Ending Cutscene Card
+    const cutsceneBox = this.add.rectangle(0, -100, 440, 140, 0x0f0804, 1);
     cutsceneBox.setStrokeStyle(2, 0xd49b3d, 0.85);
+    cutsceneBox.setInteractive({ useHandCursor: true });
 
     const cutsceneGlow = this.add.circle(0, -100, 60, 0xffd07b, 0.2);
     this.tweens.add({
@@ -87,24 +88,62 @@ export class GameCompleteScene extends Phaser.Scene {
       repeat: -1
     });
 
-    const cutsceneIcon = this.add.image(0, -118, 'icon_temple');
-    cutsceneIcon.setDisplaySize(50, 50);
-
-    const cutsceneTag = this.add.text(0, -82, '🎬 ENDING CINEMATIC OUTRO', {
+    const cutsceneTag = this.add.text(0, -118, '🎬 REPLAY ENDING CUTSCENE', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '14px',
-      color: '#4eed94',
+      fontSize: '15px',
+      color: '#ffd07b',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    const cutsceneSub = this.add.text(0, -60, '[ Final story video cutscene will play here tomorrow ]', {
+    const cutsceneSub = this.add.text(0, -90, 'Experience the final story cutscene & voiceovers', {
       fontFamily: 'Outfit, sans-serif',
-      fontSize: '11px',
+      fontSize: '12px',
       color: '#cbb393',
       fontStyle: 'italic'
     }).setOrigin(0.5);
 
-    container.add([cutsceneBox, cutsceneGlow, cutsceneIcon, cutsceneTag, cutsceneSub]);
+    const playCutsceneBtn = this.add.rectangle(0, -58, 240, 34, 0x6b3f1b, 1);
+    playCutsceneBtn.setStrokeStyle(1.5, 0xffd07b);
+    playCutsceneBtn.setInteractive({ useHandCursor: true });
+
+    const playCutsceneTxt = this.add.text(0, -58, '▶  WATCH CUTSCENE', {
+      fontFamily: 'Cinzel, serif',
+      fontSize: '12px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    const replayAction = () => {
+      sound.playButtonClick();
+      this.scene.stop('GameCompleteScene');
+      this.scene.start('CutsceneScene', {
+        transitionId: 4,
+        images: ['final_1', 'final_2', 'final_3', 'final_4', 'final_screen'],
+        audios: [
+          'final_vo_1',
+          'final_vo_2',
+          'final_vo_3',
+          ['final_vo_4_1', 'final_vo_4_2', 'final_vo_4_3'],
+          'final_sound'
+        ],
+        targetLevel: 4,
+        targetSceneKey: 'GameCompleteScene',
+        title: 'EPILOGUE: THE DIVINE BLESSING'
+      });
+    };
+
+    cutsceneBox.on('pointerdown', replayAction);
+    playCutsceneBtn.on('pointerdown', replayAction);
+    playCutsceneTxt.on('pointerdown', replayAction);
+
+    playCutsceneBtn.on('pointerover', () => {
+      playCutsceneBtn.setFillStyle(0x8a5223);
+    });
+    playCutsceneBtn.on('pointerout', () => {
+      playCutsceneBtn.setFillStyle(0x6b3f1b);
+    });
+
+    container.add([cutsceneBox, cutsceneGlow, cutsceneTag, cutsceneSub, playCutsceneBtn, playCutsceneTxt]);
 
     // 5. Emotional Message / Lore Outro
     const lore = this.add.text(0, 20,

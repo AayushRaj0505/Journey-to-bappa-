@@ -18,16 +18,16 @@ export class Level4ImagePuzzleModal extends Phaser.Scene {
   private animContainer!: Phaser.GameObjects.Container;
   private buttonBackgrounds: Map<string, Phaser.GameObjects.Rectangle> = new Map();
 
-  // The 8 available pure image options
+  // The 8 available pure image options (scrambled order so correct password is not in a straight line)
   private readonly OPTIONS: PuzzleOption[] = [
+    { id: 'lotus', textureKey: 'icon_lotus' },
+    { id: 'trident', textureKey: 'icon_trident' },
+    { id: 'flower', textureKey: 'icon_flower' },
     { id: 'elephant', textureKey: 'icon_elephant' },
     { id: 'diya', textureKey: 'icon_diya' },
-    { id: 'trident', textureKey: 'icon_trident' },
-    { id: 'temple', textureKey: 'icon_temple' },
-    { id: 'flower', textureKey: 'icon_flower' },
     { id: 'mushak', textureKey: 'icon_mushak' },
-    { id: 'bell', textureKey: 'icon_bell' },
-    { id: 'lotus', textureKey: 'icon_lotus' }
+    { id: 'temple', textureKey: 'icon_temple' },
+    { id: 'bell', textureKey: 'icon_bell' }
   ];
 
   // The mandatory correct sequence: ELEPHANT -> DIYA -> TRIDENT -> TEMPLE
